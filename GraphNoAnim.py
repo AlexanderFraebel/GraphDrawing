@@ -57,21 +57,22 @@ class Graph:
     def drawNodes(self):
         for i in self.Nodes:
             self.ax.add_patch(i.circ)
-    
-    def drawText(self):
-        for i in self.Nodes:
             plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale,
                  ha='center',va='center',zorder=i.z)
     
-    def drawArrows(self,col="black",wd=1,hwd=.1,hln=.2):
+    def drawArrows(self,col="black",wd=2,hwd=.1,hln=.2,term=.3):
         for i in np.argwhere(self.Mat != 0):
-            ter = distpt(self.Nodes[i[0]],self.Nodes[i[1]],.32)
+            if i[0] == i[1]:
+                continue
+            ter = distpt(self.Nodes[i[0]],self.Nodes[i[1]],term)
             connectArrPts(self.Nodes[i[0]].x,self.Nodes[i[0]].y,ter[0],ter[1],
-                          width=wd,headwidth=hwd,headlength=hln,zorder=0,color=col)
+                          width=wd,headwidth=hwd,headlength=hln,z=0,col=col)
             
-    def drawLines(self,col="black",wd=1):
+    def drawLines(self,col="black",wd=2):
         for i in np.argwhere(self.Mat != 0):
-            ter = distpt(self.Nodes[i[0]],self.Nodes[i[1]],.32)
+            if i[0] == i[1]:
+                continue
+            ter = dist(self.Nodes[i[0]],self.Nodes[i[1]])
             plt.plot([self.Nodes[i[0]].x,ter[0]],[self.Nodes[i[0]].y,ter[1]],
                      color=col,lw=wd,zorder=0)
             
@@ -117,8 +118,7 @@ def connectArr(A,B,col="black",width=1,headwidth=.2,headlength=.2,z=0):
               head_width=headwidth, head_length=headlength,
               length_includes_head=True)
 
-# Same functionality between points arbitrary points
-
+# Draw straight line connections between arbitrary points
 def connectPts(x1,y1,x2,y2,col="black",width=1,z=0):
     plt.plot([x1,x2],[y1,y2],color=col,lw=width,zorder=z)
     
@@ -127,6 +127,11 @@ def connectArrPts(x1,y1,x2,y2,col="black",width=1,headwidth=.2,headlength=.2,z=0
           head_width=headwidth, head_length=headlength,
           length_includes_head=True)
 
+
+# Method for creating arched paths between points
+# Needs improvement
+# Ellipse maybe?
+# Make sure always works.
 def CircThruPoints(A,B,r,inv=False):
     if A.xy == B.xy:
         raise ValueError('identical positions')
@@ -161,14 +166,17 @@ def connectArc(A,B,r,inv=False):
 
     plt.plot(xy[0],xy[1],color="black",lw=2,zorder=0)
 
-# Miscelaneous functions        
-def arc(xy,r,th,n):
-    x = np.cos(np.linspace(0,th,n+1))*r+xy[0]
-    y = np.sin(np.linspace(0,th,n+1))*r+xy[1]
+
+# Arc drawing functions
+# List of coordinates
+def arc(xy,r,th=[0,np.pi],n=100):
+    x = np.cos(np.linspace(th[0],th[1],n+1))*r+xy[0]
+    y = np.sin(np.linspace(th[0],th[1],n+1))*r+xy[1]
     x = x[:n]
     y = y[:n]
     return [(a,b) for (a,b) in zip(x,y)]
 
+# List of x positions and list of y positions
 def arcXY(xy,r,th=[0,np.pi],n=100):
     x = np.cos(np.linspace(th[0],th[1],n+1))*r+xy[0]
     y = np.sin(np.linspace(th[0],th[1],n+1))*r+xy[1]
@@ -176,6 +184,7 @@ def arcXY(xy,r,th=[0,np.pi],n=100):
     y = y[:n]
     return [x,y]
 
+# Distance functions
 def dist(A,B):
     p1 = (A.x-B.x)**2
     p2 = (A.y-B.y)**2
@@ -186,7 +195,7 @@ def distMat(L):
     return distance.squareform(np.round(distance.pdist(ps),3))
 
 
-# Find midpoints in two dimensions or in one
+# Find midpoints of nodes in two dimensions or in one
 def midpt(A,B):
     x = (A.x + B.x)/2
     y = (A.y + B.y)/2
@@ -218,6 +227,26 @@ def distpt(A,B,d):
 def minmax(L):
     return [min(L),max(L)]
 
+# Connection plot
+def connectogram(R,L=[None],title="",size=[7,7]):
+    
+    n = R.shape[0]
+    if len(L) != n:
+        L = [str(i+1) for i in range(n)]
+    
+    print(R)
+    xy = arc((0,0),2.5,[0,np.pi*2],n)
+    G = Graph(rdef=.3,tscaledef=70,size=size)
+    
+    for i,pos in enumerate(xy):
+        G.addNode(pos,text=str([L[i]][0]),z=2)
+    
+    G.Mat = R
+    G.drawNodes()
+    G.drawArrows(term=.32)
+    plt.title(title)
+
+## Test of various functionality
 def test():
 
     G = Graph([-3,3],[-3,3],[7,7],rdef=.3)
