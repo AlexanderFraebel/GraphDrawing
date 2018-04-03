@@ -42,29 +42,6 @@ def makeAcyclic(N):
             R[x,y] = random.choice([1,1,0,0,0,0,0,0])
     return R
 
-def connectogram(R,title=""):
-    print(R)
-    L = string.ascii_uppercase[:R.shape[0]]
-
-    n = len(L)
-    xy = arc((0,0),2.5,[0,np.pi*2],n)
-    
-    G = Graph(rdef=.3,tscaledef=70)
-    
-    for i,pos in enumerate(xy):
-        G.addNode(pos,text=str([L[i]][0]),z=2)
-        
-    G.QuickDraw()
-    
-    for i in np.argwhere(R==1):
-        if i[0] == i[1]:
-            continue
-        A = G.Nodes[i[0]]
-        B = G.Nodes[i[1]]
-        ter = distpt(A,B,.32)
-        connectArrPts(A.x,A.y,ter[0],ter[1],width=1.5,headwidth=.1,headlength=.2)
-
-    plt.title(title)
 
 #random.seed(100)
 
