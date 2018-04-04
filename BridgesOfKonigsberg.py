@@ -1,4 +1,4 @@
-import GraphNoAnim
+from GraphNoAnim import *
 
 def EulersBridges():
     # There are four landmasses and seven bridges with the following layout
@@ -13,10 +13,10 @@ def EulersBridges():
 
     G.addEdges([0,1,1],[1,2,3])
     
-    connectArc(G.Nodes[0],G.Nodes[2],3)
-    connectArc(G.Nodes[0],G.Nodes[2],3,True)
-    connectArc(G.Nodes[0],G.Nodes[3],3)
-    connectArc(G.Nodes[0],G.Nodes[3],3,True)
+    bezierCurve(G.Nodes[0],G.Nodes[2],1)
+    bezierCurve(G.Nodes[0],G.Nodes[2],-1)
+    bezierCurve(G.Nodes[0],G.Nodes[3],1)
+    bezierCurve(G.Nodes[0],G.Nodes[3],-1)
     G.QuickDraw()
 
 EulersBridges()

@@ -23,6 +23,7 @@ class Graph:
         # Prepare a matrix of connections
         self.Mat = [0]
     
+    ## Create new node
     def addNode(self,xy=[0,0],r=None,col=[None],text="",tscale=None,z=1):
         if r == None:
             r = self.rdef
@@ -35,15 +36,35 @@ class Graph:
         t = np.zeros((len(self.Nodes),len(self.Nodes)))
         t[:-1,:-1] = self.Mat
         self.Mat = t
-        
-    def addEdge(self,A,B,d=1):
-        self.Mat[A,B] = d
-        
+
+    ## Create edges. By default just sets them equal to 1.
     def addEdges(self,A,B,D=[None]):
         if any(i == None for i in D):
             D = [1]*len(A)
         self.Mat[A,B] = D
+    
+    # Bidirectional edges. Often doesn't matter when drawing but I figured it 
+    # would be annoying if this wasn't in here somewhere.
+    def addEdgesBi(self,A,B,D=[None]):
+        if any(i == None for i in D):
+            D = [1]*len(A)
+        self.Mat[A,B] = D
+        self.Mat[B,A] = D
+    
+    ## Remove nodes and edges.
+    def delNode(self,n):
+        del self.Nodes[n]
+        self.Mat = np.delete(self.Mat,n,0)
+        self.Mat = np.delete(self.Mat,n,1)
+    
+    def delEdges(self,A,B):
+        self.Mat[A,B] = 0
+    
+    def delEdgesBi(self,A,B):
+        self.Mat[A,B] = 0
+        self.Mat[B,A] = 0
 
+    # Simple drawing functions for common situations
     def QuickDraw(self):
         for i in self.Nodes:
             self.ax.add_patch(i.circ)
@@ -76,6 +97,8 @@ class Graph:
             plt.plot([self.Nodes[i[0]].x,ter[0]],[self.Nodes[i[0]].y,ter[1]],
                      color=col,lw=wd,zorder=0)
             
+            
+## The Node class has the properties of each vertex of the graph.
 class Node:
     def __init__(self,xy=[0,0],r=.5,col=(.53, .81, .94),text="",tscale=30,z=1):
         self.xy = xy
@@ -128,43 +151,30 @@ def connectArrPts(x1,y1,x2,y2,col="black",width=1,headwidth=.2,headlength=.2,z=0
           length_includes_head=True)
 
 
-# Method for creating arched paths between points
-# Needs improvement
-# Ellipse maybe?
-# Make sure always works.
-def CircThruPoints(A,B,r,inv=False):
-    if A.xy == B.xy:
-        raise ValueError('identical positions')
-    d = dist(A,B)
-    dx, dy = A.x-B.x, A.y-B.y
-    md = np.sqrt((r**2)-(d/2)**2)
-    if d > r:
-        raise ValueError('separation of points > diameter')
-    x3,y3 = midpt(A,B)
-    if inv == False:
-        X = x3 - md*dy/d
-        Y = y3 + md*dx/d
-    else: 
-        X = x3 + md*dy/d
-        Y = y3 - md*dx/d
-    return X,Y
+# Create an arbitrary Bezier spline with two end points and one control point
+def bezier2(A,B,C):
+    t = np.linspace(0,1,50)
+    P0 = perpt(A,B,t)
+    P1 = perpt(B,C,t)
+    return perpt(P0,P1,t)
 
-def connectArc(A,B,r,inv=False):
-    x,y = CircThruPoints(A,B,r,inv)
+# Simplified Bezier spline. Control point is at a distance perpendicular from
+# the midpoint of the connecting line.
+def bezierCurve(A,B,r=1):
+    t = np.linspace(0,1,50)
+    mdpt = midpt(A,B)
+    if A.x == B.x:
+        R = Node([A.x+r,midY(A,B)])
+    if A.y == B.y:
+        R = Node([midX(A,B),A.y+r])
+    if A.x != B.x and A.y != B.y:
+        ang = np.arctan2((A.y-B.y),(A.x-B.x))+np.pi/2
+        R = Node([r*np.cos(ang)+mdpt[0],r*np.sin(ang)+mdpt[1]])
+    P0 = perpt(A,R,t)
+    P1 = perpt(R,B,t)
     
-    dx0 = A.x-x
-    dx1 = B.x-x
-    
-    if inv == False:
-        th0 = np.arccos(dx0/r)
-        th1 = np.arccos(dx1/r)
-    else:
-        th0 = -np.arccos(dx0/r)
-        th1 = -np.arccos(dx1/r)
-    
-    xy = arcXY([x,y],r,[th0,th1],100)
-
-    plt.plot(xy[0],xy[1],color="black",lw=2,zorder=0)
+    out = perpt(P0,P1,t)
+    plt.plot(out[0],out[1],color="black",lw=2,zorder=0)
 
 
 # Arc drawing functions
@@ -202,17 +212,22 @@ def midpt(A,B):
     return [x,y]
 
 def midX(A,B):
-    return (A.xy[0] + B.xy[0])/2
+    return (A.x + B.x)/2
 
 def midY(A,B):
-    return (A.xy[1] + B.xy[1])/2
+    return (A.y + B.y)/2
 
 # Find the point that is some percentage of the way between A and B
-# 0 is at the centerof A, 1 is at the center of B
+# 0 is at the center of A, 1 is at the center of B
 def perpt(A,B,p):
-    x = (A.x)*(1-p) + (B.x)*(p)
-    y = (A.y)*(1-p) + (B.y)*(p)
-    return [x,y]
+    if type(A) == Node and type(B) == Node:
+        x = (A.x)*(1-p) + (B.x)*(p)
+        y = (A.y)*(1-p) + (B.y)*(p)
+        return [x,y]
+    else:
+        x = (A[0])*(1-p) + (B[0])*(p)
+        y = (A[1])*(1-p) + (B[1])*(p)
+        return [x,y]
 
 # Find the point that is some distance from B along the line between A and B
 def distpt(A,B,d):
@@ -249,19 +264,20 @@ def connectogram(R,L=[None],title="",size=[7,7]):
 ## Test of various functionality
 def test():
 
-    G = Graph([-3,3],[-3,3],[7,7],rdef=.3)
+    G = Graph([-3,3],[-3,3],[7,7],rdef=.5)
     G.addNode()
     print(G.Mat)
-    G.addNode([-2,0],text="Hello")
+    G.addNode([-2,.5],text="Hello")
     print(G.Mat)
     
-    G.addNode([1,-1])
+    G.addNode([1,-1.5])
     print(G.Mat)
-    G.addEdge(0,1)
-    G.addEdge(1,2)
+    G.addEdges([0,1],[1,2])
     print(G.Mat)
     G.QuickDraw()
     
-    connectArc(G.Nodes[0],G.Nodes[1],2.5)
-    #connectArc(G.Nodes[0],G.Nodes[1],5)
+    x,y = bezierCurve(G.Nodes[0],G.Nodes[1],2)
+    plt.plot(x,y,zorder=0)
+
+
 #test()
