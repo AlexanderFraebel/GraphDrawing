@@ -151,13 +151,19 @@ def connectArrPts(x1,y1,x2,y2,col="black",width=1,headwidth=.2,headlength=.2,z=0
           length_includes_head=True)
 
 
-# Create an arbitrary Bezier spline with two end points and one control point
-def bezier2(A,B,C):
+# Create arbitrary Bezier splines with either one or two control points
+def bezierQuad(A,B,C):
     t = np.linspace(0,1,50)
     P0 = perpt(A,B,t)
     P1 = perpt(B,C,t)
     return perpt(P0,P1,t)
 
+def bezierCube(A,B,C,D):
+    t = np.linspace(0,1,50)
+    P0 = bezierQuad(A,B,C)
+    P1 = bezierQuad(B,C,D)
+    return perpt(P0,P1,t)
+    
 # Simplified Bezier spline. Control point is at a distance perpendicular from
 # the midpoint of the connecting line.
 def bezierCurve(A,B,r=1):
@@ -175,7 +181,45 @@ def bezierCurve(A,B,r=1):
     
     out = perpt(P0,P1,t)
     plt.plot(out[0],out[1],color="black",lw=2,zorder=0)
-
+    
+# Similar but for cublic splines
+def bezierCurveCubic(A,B,r1=1,r2=1):
+    
+    t = np.linspace(0,1,50)
+    
+    if A.x == B.x:
+        R1 = Node([A.x+r1,midY(A,B)+r2])
+        R2 = Node([A.x+r1,midY(A,B)-r2])
+        
+    if A.y == B.y:
+        R1 = Node([midX(A,B)+r2,A.y+r1])
+        R2 = Node([midX(A,B)-r2,A.y+r1])
+        
+    if A.x != B.x and A.y != B.y:
+        
+        # Midpoint to position the curve
+        mdpt = midpt(A,B)
+        # Angle between the points and the angle perpendicular to it
+        ang1 = np.arctan2((A.y-B.y),(A.x-B.x))
+        ang2 = ang1+np.pi/2
+        
+        # Shift along the connecting line
+        sh = [r2*np.cos(ang1),r2*np.sin(ang1)]
+        # Shift perpendicular to it
+        r = [r1*np.cos(ang2)+mdpt[0],r1*np.sin(ang2)+mdpt[1]]
+        
+        R1 = Node([r[0]+sh[0],r[1]+sh[1]])
+        R2 = Node([r[0]-sh[0],r[1]-sh[1]])
+        
+    P0 = perpt(A,R1,t)
+    P1 = perpt(R1,R2,t)
+    P2 = perpt(R2,B,t)
+    
+    Q0 = perpt(P0,P1,t)
+    Q1 = perpt(P1,P2,t)
+    
+    out = perpt(Q0,Q1,t)
+    plt.plot(out[0],out[1],color="black",lw=2,zorder=0)
 
 # Arc drawing functions
 # List of coordinates
@@ -274,10 +318,10 @@ def test():
     print(G.Mat)
     G.addEdges([0,1],[1,2])
     print(G.Mat)
+    G.Nodes[0].update(col='red')
     G.QuickDraw()
     
-    x,y = bezierCurve(G.Nodes[0],G.Nodes[1],2)
-    plt.plot(x,y,zorder=0)
-
-
+    bezierCurve(G.Nodes[0],G.Nodes[1],2)
+    
+    bezierCurveCubic(G.Nodes[0],G.Nodes[2],-2,4)
 #test()
