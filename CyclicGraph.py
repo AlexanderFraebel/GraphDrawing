@@ -1,7 +1,7 @@
 import string
 import random
 import numpy as np
-from GraphNoAnim import *
+from Graphs import *
 
 def randAjdMat(N=5):
     R = np.zeros([N,N])
@@ -45,13 +45,13 @@ def makeAcyclic(N):
 
 #random.seed(100)
 
-#L, R = randAjdMat(7)
-#cyc = checkCyclic(R)
-#if cyc:
-#    t = "Cyclic"
-#else:
-#    t = "Acyclic"
-#connectogram(L,R,title = "{} Graph".format(t))
+R = randAjdMat(7)
+cyc = checkCyclic(R)
+if cyc:
+    t = "Cyclic"
+else:
+    t = "Acyclic"
+connectogram(R,title = "{} Graph".format(t))
 
 R = makeAcyclic(9)
 cyc = checkCyclic(R)

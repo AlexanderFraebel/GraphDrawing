@@ -1,4 +1,4 @@
-from GraphNoAnim import *
+from Graphs import *
 
 def EulersBridges():
     # There are four landmasses and seven bridges with the following layout

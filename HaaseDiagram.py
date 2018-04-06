@@ -1,5 +1,5 @@
 import numpy as np
-from GraphNoAnim import *
+from Graphs import *
 
 def primeFactors(n):
     if n == 1:

@@ -1,4 +1,5 @@
-from GraphNoAnim import *
+import numpy as np
+from Graphs import *
 
 def makeAcyclic(N):
     R = np.zeros([N,N])

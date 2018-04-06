@@ -1,4 +1,4 @@
-from GraphNoAnim import *
+from Graphs import *
 
 L = [2,3,5,10,15,30]
 

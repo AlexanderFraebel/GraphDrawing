@@ -1,4 +1,4 @@
-from GraphNoAnim import *
+from Graphs import *
 import numpy as np
 import random
 import string
