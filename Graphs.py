@@ -362,8 +362,7 @@ def connectogram(R,L=[None],title="",size=[7,7]):
     n = R.shape[0]
     if len(L) != n:
         L = [str(i+1) for i in range(n)]
-    
-    print(R)
+
     xy = arc((0,0),2.5,[0,np.pi*2],n)
     G = Graph(rdef=.3,tscaledef=70,size=size)
     
@@ -374,6 +373,7 @@ def connectogram(R,L=[None],title="",size=[7,7]):
     G.drawNodes()
     G.drawArrows(term=.32)
     plt.title(title)
+    return G
 
 ###############################################################################
 ###############################################################################
@@ -390,7 +390,7 @@ def test():
     G.addNode([-2,.5],text="Hello")
     print(G.Mat)
     
-    G.addNode([1,-1.5])
+    G.addNode([1,-1.5],r=.3)
     print(G.Mat)
     G.addEdges([0,1],[1,2])
     print(G.Mat)
@@ -404,4 +404,4 @@ def test():
     connectArr(G.Nodes[0],G.Nodes[2])
     loop(G.Nodes[0],th=-.2,rot=.5)
     
-test()
+#test()

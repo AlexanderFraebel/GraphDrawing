@@ -60,3 +60,4 @@ if cyc:
 else:
     t = "Acyclic"
 connectogram(R,title = "{} Graph".format(t))
+connectogramCurves(R,title = "{} Graph Curved".format(t))
