@@ -1,4 +1,3 @@
-import string
 import random
 import numpy as np
 from Graphs import *
@@ -9,27 +8,6 @@ def randAjdMat(N=5):
         for y in range(N):
             R[x,y] = random.choice([1,1,0,0,0,0,0,0])
     return R
-
-def checkCyclic(R):
-    A = R.copy()
-    for i in range(len(A)):
-        A[i,i] = 0
-    emptyRow = True
-    while emptyRow == True:
-        n = len(A)
-        #print(n)
-        if n == 0:
-            #print(A)
-            return False
-        for i in range(n):
-            if sum(A[i,]) == 0:
-                A = np.delete(A,i,0)
-                A = np.delete(A,i,1)
-                emptyRow = True
-                break
-            emptyRow = False
-    #print(A)
-    return True
 
 
 # Every acyclic graph has an adjacency matrix that can be rearranged so it is
@@ -45,13 +23,6 @@ def makeAcyclic(N):
 
 #random.seed(100)
 
-R = randAjdMat(7)
-cyc = checkCyclic(R)
-if cyc:
-    t = "Cyclic"
-else:
-    t = "Acyclic"
-connectogram(R,title = "{} Graph".format(t))
 
 R = makeAcyclic(9)
 cyc = checkCyclic(R)
@@ -59,5 +30,11 @@ if cyc:
     t = "Cyclic"
 else:
     t = "Acyclic"
-connectogram(R,title = "{} Graph".format(t))
-connectogramCurves(R,title = "{} Graph Curved".format(t))
+G = connectogram(R,title = "{} Directed Graph".format(t))
+# We can check if a Graph object is cyclic
+print(checkCyclic(G))
+# We can also make a more traditional connectogram with curved lines
+# These are always undirected (would like to find method for drawing curved 
+# arrows)
+connectogramCurvesUndir(R,title = "Undirected Graph Curved Lines".format(t))
+

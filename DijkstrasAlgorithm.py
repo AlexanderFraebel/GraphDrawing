@@ -86,16 +86,24 @@ def dijkstra(M,s=0):
     return d,pathlist
 
 def DijkstraExample():
-    X = randAjdMat(8)
-    print(X)
-    di = dijkstra(X)
-    G = connectogram(X,[i for i in range(8)])
-    print(di[0])
-    print(di[1])
+    X = randAjdMat(9)
+    #print(X)
+    N = 0
+    di = dijkstra(X,N)
+    G = connectogram(X,[i for i in range(8)],
+                       title="Shortest Paths from Node {}".format(N))
+    #print(di[0])
+    for pos,val in enumerate(di[1]):
+        s = ""
+        for i in val:
+            s += str(i) + " \u2192 "
+        print("{}: {}".format(pos,s[:-2]))
+        
     for i in di[1]:
         if len(i) == 1:
             continue
         for j in range(len(i)-1):
             connectArr(G.Nodes[i[j]],G.Nodes[i[j+1]],col='red',z=1,width=2)
+
 
 DijkstraExample()

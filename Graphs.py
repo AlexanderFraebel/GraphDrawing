@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import itertools
+import matplotlib.patches as patches
 
 class Graph:
     def __init__(self,xlims=[-3,3],ylims=[-3,3],size=[7,7],
@@ -20,7 +22,7 @@ class Graph:
         self.Nodes = []
         
         # Prepare a matrix of connections
-        self.Mat = [0]
+        self.Mat = np.asarray([0])
     
     ## Create new node
     def addNode(self,xy=[0,0],r=None,col=[None],text="",tscale=None,z=1):
@@ -36,8 +38,9 @@ class Graph:
         t[:-1,:-1] = self.Mat
         self.Mat = t
         
-    def addNodes(self,xy=[None],r=[None],col=[None],text=[None],tscale=[None],z=[None]):
-        pass
+    def resize(self,size=[7,7]):
+        self.size = size
+        self.fig.set_size_inches(size[0], size[1])
 
     ## Create edges. By default just sets them equal to 1.
     def addEdges(self,A,B,D=[None]):
@@ -230,6 +233,7 @@ def bezierCurve(A,B,r=1):
     
     out = perpt(P0,P1,t)
     plt.plot(out[0],out[1],color="black",lw=2,zorder=0)
+    return out
     
 # Similar but for cublic splines
 def bezierCurveCubic(A,B,r1=1,r2=1):
@@ -269,6 +273,7 @@ def bezierCurveCubic(A,B,r1=1,r2=1):
     
     out = perpt(Q0,Q1,t)
     plt.plot(out[0],out[1],color="black",lw=2,zorder=0)
+    return out
 
 # Arc drawing functions
 # List of coordinates
@@ -286,6 +291,96 @@ def arcXY(xy,r,th=[0,np.pi],n=100):
     x = x[:n]
     y = y[:n]
     return [x,y]
+
+
+###############################################################################
+###############################################################################
+##
+## GRAPH THEORETIC PROPERTIES
+##
+###############################################################################
+###############################################################################
+    
+# Creates a dictionary of out-edges based on either a graph or a matrix
+def edgeDict(G):
+    
+    edges = dict()
+    if type(G) == Graph:
+        N = len(G.Nodes)
+        for i in range(N):
+            edges[str(i)] = []
+            for j in range(N):
+                if G.Mat[i,j] != 0:
+                    edges[str(i)] += [j]
+        return edges
+    elif type(G) == np.ndarray:
+        s = np.shape(G)
+        if s[0] != s[1]:
+            raise ValueError("Adjacency matrix must be square")
+        else:
+            N = s[0]
+            for i in range(N):
+                edges[str(i)] = []
+                for j in range(N):
+                    if G[i,j] != 0:
+                        edges[str(i)] += [j]
+            return edges
+    else:
+        raise ValueError("Input must be Graph object or ndarray")
+        
+
+# Make every edge in a graph into an undirected edge
+def makeUndir(G):
+    if type(G) == Graph:
+        N = len(G.Nodes)
+        for x in range(N):
+            for y in range(x):
+                m = max(G.Mat[x,y], G.Mat[y,x])
+                G.Mat[x,y], G.Mat[y,x] = m,m
+    elif issqmat(G):
+        N = np.shape(G)[0]
+        for x in range(N):
+            for y in range(x):
+                m = max(G[x,y], G[y,x])
+                G[x,y], G[y,x] = m,m        
+
+# Check if a Graph pobject or a relation matrix is cylic
+def checkCyclic(R):
+    if type(R) == Graph:
+        A = R.Mat.copy()
+        for i in range(len(A)):
+            A[i,i] = 0
+        emptyRow = True
+        while emptyRow == True:
+            n = len(A)
+            if n == 0:
+                return False
+            for i in range(n):
+                if sum(A[i,]) == 0:
+                    A = np.delete(A,i,0)
+                    A = np.delete(A,i,1)
+                    emptyRow = True
+                    break
+                emptyRow = False
+        return True
+    
+    elif issqmat(R):
+        A = R.copy()
+        for i in range(len(A)):
+            A[i,i] = 0
+        emptyRow = True
+        while emptyRow == True:
+            n = len(A)
+            if n == 0:
+                return False
+            for i in range(n):
+                if sum(A[i,]) == 0:
+                    A = np.delete(A,i,0)
+                    A = np.delete(A,i,1)
+                    emptyRow = True
+                    break
+                emptyRow = False
+        return True
 
 ###############################################################################
 ###############################################################################
@@ -348,6 +443,14 @@ def distpt(A,B,d):
 def minmax(L):
     return [min(L),max(L)]
 
+# Check if input is a square numpy matrix
+def issqmat(M):
+    if type(M) == np.ndarray:
+        s = np.shape(M)
+        if s[0] != s[1]:
+            raise ValueError("Adjacency matrix must be square")
+        return True
+    raise ValueError("Must be an ndarry object")
 
 ###############################################################################
 ###############################################################################
@@ -361,7 +464,7 @@ def connectogram(R,L=[None],title="",size=[7,7]):
     
     n = R.shape[0]
     if len(L) != n:
-        L = [str(i+1) for i in range(n)]
+        L = [str(i) for i in range(n)]
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
     G = Graph(rdef=.3,tscaledef=70,size=size)
@@ -371,10 +474,54 @@ def connectogram(R,L=[None],title="",size=[7,7]):
 
     G.Mat = R
     G.drawNodes()
-    G.drawArrows(term=.32)
+    G.drawArrows(term=G.rdef*1.1)
     plt.title(title)
     return G
 
+def connectogramUndir(R,L=[None],title="",size=[7,7]):
+    
+    n = R.shape[0]
+    if len(L) != n:
+        L = [str(i) for i in range(n)]
+
+    xy = arc((0,0),2.5,[0,np.pi*2],n)
+    G = Graph(rdef=.3,tscaledef=70,size=size)
+    
+    for i,pos in enumerate(xy):
+        G.addNode(pos,text=str([L[i]][0]),z=2)
+
+    G.Mat = R
+    G.drawNodes()
+    G.drawLines(term=G.rdef*1.1)
+    plt.title(title)
+    makeUndir(G)
+    return G
+
+def connectogramCurvesUndir(R,L=[None],title="",size=[7,7]):
+    
+    n = R.shape[0]
+    if len(L) != n:
+        L = [str(i) for i in range(n)]
+    
+    xy = arc((0,0),2.5,[0,np.pi*2],n)
+    G = Graph(rdef=.3,tscaledef=70,size=size)
+    
+    for i,pos in enumerate(xy):
+        G.addNode(pos,text=str([L[i]][0]),z=2)
+    G.Mat = R
+    G.drawNodes()
+    for i in np.argwhere(R != 0):
+        if i[0] == i[1]:
+            continue
+        if i[0] - i[1] > (n//2):
+            bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=-1)
+        else:
+            bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=1)
+    plt.title(title)
+    makeUndir(G)
+    return G
+    
+    
 ###############################################################################
 ###############################################################################
 ##
@@ -384,24 +531,51 @@ def connectogram(R,L=[None],title="",size=[7,7]):
 ###############################################################################
 def test():
 
+    # Make a graph
     G = Graph([-3,3],[-3,3],[7,7],rdef=.5)
+
+    # Add a node with all default properties
     G.addNode()
-    print(G.Mat)
+    # Add a node at a different position with text
     G.addNode([-2,.5],text="Hello")
-    print(G.Mat)
-    
+
+    # Add a node at a different position with different size
     G.addNode([1,-1.5],r=.3)
-    print(G.Mat)
+    
+    # Create some edges
     G.addEdges([0,1],[1,2])
-    print(G.Mat)
+    
+    # Change an existing node
     G.Nodes[0].update(col='red')
+    
+    print(G.Mat)
+    print(type(G.Mat))
+    
+    # Use the quickdraw function
     G.QuickDraw()
     
+    # Use the simplified bezier curve function
     bezierCurve(G.Nodes[0],G.Nodes[1],2)
     
+    # Use the simplified cubie bezier curve function
     bezierCurveCubic(G.Nodes[0],G.Nodes[2],-2,4)
-    connectArr([0,0],[2,2])
-    connectArr(G.Nodes[0],G.Nodes[2])
-    loop(G.Nodes[0],th=-.2,rot=.5)
     
-#test()
+    # Connecting arrow between points
+    connectArr([0,0],[1.1,2])
+    
+    #Connecting arrow between nodes
+    connectArr(G.Nodes[0],G.Nodes[2])
+    
+    #Make a loop
+    loop(G.Nodes[0],th=.1,rot=.5)
+    
+    ## Make changes to the plot area by referring to the .ax property
+    angles = np.arange(0, 360 + 45, 45)
+    ells = [patches.Ellipse((1, 1), 4, 2, a,zorder=0) for a in angles]
+    for e in ells:
+        e.set_alpha(0.1)
+        G.ax.add_patch(e)
+        
+    ## Resize after the fact
+    G.resize([8,8])
+test()
