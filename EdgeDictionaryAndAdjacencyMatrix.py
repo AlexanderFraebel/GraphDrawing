@@ -13,12 +13,13 @@ def randAjdMat(N=5):
 R = randAjdMat(10)
 G = connectogram(R)
 print(R)
-print()
+
+print("\n\nDict created from Graph object")
 E = edgeDict(G)
 for k,v in E.items():
     print(k,v)
 
-print()
+print("\n\nDict created from raw adjacency matrix")
 E = edgeDict(R)
 for k,v in E.items():
     print(k,v)

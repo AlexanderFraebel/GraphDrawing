@@ -2,13 +2,6 @@ import random
 import numpy as np
 from Graphs import *
 
-def randAjdMat(N=5):
-    R = np.zeros([N,N])
-    for x in range(N):
-        for y in range(N):
-            R[x,y] = random.choice([1,1,0,0,0,0,0,0])
-    return R
-
 
 # Every acyclic graph has an adjacency matrix that can be rearranged so it is
 # lower triangular. So to make an acyclic graph we just randomly fill in the
@@ -31,10 +24,3 @@ if cyc:
 else:
     t = "Acyclic"
 G = connectogram(R,title = "{} Directed Graph".format(t))
-# We can check if a Graph object is cyclic
-print(checkCyclic(G))
-# We can also make a more traditional connectogram with curved lines
-# These are always undirected (would like to find method for drawing curved 
-# arrows)
-connectogramCurvesUndir(R,title = "Undirected Graph Curved Lines".format(t))
-

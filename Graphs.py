@@ -5,13 +5,14 @@ import matplotlib.patches as patches
 
 class Graph:
     def __init__(self,xlims=[-3,3],ylims=[-3,3],size=[7,7],
-                 rdef=.5,tscaledef=30,coldef=(.53, .81, .94)):
+                 rdef=.5,tscaledef=10,coldef=(.53, .81, .94)):
 
         ## Setup the plot area
         self.fig = plt.figure()
         self.fig.set_size_inches(size[0], size[1])
         self.ax = plt.axes(xlim=xlims, ylim=ylims)
         self.ax.axis('off')
+        self.size = size
         
         # Set a few default characteristics
         self.rdef = rdef
@@ -34,6 +35,7 @@ class Graph:
             col = self.coldef
         self.Nodes.append(Node(xy,r,col,text,tscale,z))
 
+        # Expand the adjacency matrix
         t = np.zeros((len(self.Nodes),len(self.Nodes)))
         t[:-1,:-1] = self.Mat
         self.Mat = t
@@ -71,17 +73,19 @@ class Graph:
 
     # Simple drawing functions for common situations
     def QuickDraw(self):
+        d = np.sqrt(self.size[0]**2+self.size[1]**2)/2
         for i in self.Nodes:
             self.ax.add_patch(i.circ)
-            plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale,
+            plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale*d,
                  ha='center',va='center',zorder=i.z)
         for i in np.argwhere(self.Mat != 0):
             connect(self.Nodes[i[0]],self.Nodes[i[1]])
 
     def drawNodes(self):
+        d = np.sqrt(self.size[0]**2+self.size[1]**2)/2
         for i in self.Nodes:
             self.ax.add_patch(i.circ)
-            plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale,
+            plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale*d,
                  ha='center',va='center',zorder=i.z)
     
     def drawArrows(self,col="black",wd=2,hwd=.1,hln=.2,term=None):
@@ -95,7 +99,7 @@ class Graph:
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
-            connect(self.Nodes[0],self.Nodes[1])
+            connect(self.Nodes[i[0]],self.Nodes[i[1]],col=col,width=wd)
             
             
 ## The Node class has the properties of each vertex of the graph.
@@ -313,21 +317,19 @@ def edgeDict(G):
                 if G.Mat[i,j] != 0:
                     edges[str(i)] += [j]
         return edges
-    elif type(G) == np.ndarray:
-        s = np.shape(G)
-        if s[0] != s[1]:
-            raise ValueError("Adjacency matrix must be square")
-        else:
-            N = s[0]
-            for i in range(N):
-                edges[str(i)] = []
-                for j in range(N):
-                    if G[i,j] != 0:
-                        edges[str(i)] += [j]
-            return edges
+    elif issqmat(G):
+        N = np.shape(G)[0]
+        for i in range(N):
+            edges[str(i)] = []
+            for j in range(N):
+                if G[i,j] != 0:
+                    edges[str(i)] += [j]
+        return edges
     else:
         raise ValueError("Input must be Graph object or ndarray")
         
+
+
 
 # Make every edge in a graph into an undirected edge
 def makeUndir(G):
@@ -343,6 +345,21 @@ def makeUndir(G):
             for y in range(x):
                 m = max(G[x,y], G[y,x])
                 G[x,y], G[y,x] = m,m        
+
+def isUndir(G):
+    if type(G) == Graph:
+        N = len(G.Nodes)
+        for x in range(N):
+            for y in range(x):
+                if G.Mat[x,y] != G.Mat[y,x]:
+                    return False
+    elif issqmat(G):
+        N = np.shape(G)[0]
+        for x in range(N):
+            for y in range(x):
+                if G[x,y] != G[y,x]:
+                    return False
+    return True
 
 # Check if a Graph pobject or a relation matrix is cylic
 def checkCyclic(R):
@@ -382,6 +399,8 @@ def checkCyclic(R):
                 emptyRow = False
         return True
 
+
+
 ###############################################################################
 ###############################################################################
 ##
@@ -390,24 +409,41 @@ def checkCyclic(R):
 ###############################################################################
 ###############################################################################
     
-# Euclidean distance between nodes
+# Euclidean distance between nodes or points
 def dist(A,B):
-    p1 = (A.x-B.x)**2
-    p2 = (A.y-B.y)**2
-    return np.sqrt(p1+p2)
+    if type(A) == Node and type(B) == Node:
+        p1 = (A.x-B.x)**2
+        p2 = (A.y-B.y)**2
+        return np.sqrt(p1+p2)
+    else:
+        p1 = (A[0]-B[0])**2
+        p2 = (A[1]-B[1])**2
+        return np.sqrt(p1+p2)
 
 
-# Find midpoints between nodes in two dimensions or in one
+# Find midpoints between nodes in two dimensions
 def midpt(A,B):
-    x = (A.x + B.x)/2
-    y = (A.y + B.y)/2
-    return [x,y]
+    if type(A) == Node and type(B) == Node:
+        x = (A.x + B.x)/2
+        y = (A.y + B.y)/2
+        return [x,y]
+    else:
+        x = (A[0] + B[0])/2
+        y = (A[1] + B[1])/2
+        return [x,y]
 
+# Just the x or y coordinate if that's easier
 def midX(A,B):
-    return (A.x + B.x)/2
+    if type(A) == Node and type(B) == Node:
+        return (A.x + B.x)/2
+    else:
+        return (A[0] + B[0])/2
 
 def midY(A,B):
-    return (A.y + B.y)/2
+    if type(A) == Node and type(B) == Node:
+        return (A.y + B.y)/2
+    else:
+        return (A[1] + B[1])/2
 
 # Find the point that is some percentage of the way between A and B
 # 0 is at the center of A, 1 is at the center of B
@@ -425,7 +461,10 @@ def perpt(A,B,p):
 def distpt(A,B,d):
     dd = dist(A,B)
     if dd == 0:
-        return A.xy
+        if type(A) == Node and type(B) == Node:
+            return A.xy
+        else:
+            return A
     p = (dd-d)/(dd)
     return perpt(A,B,p)
 
@@ -460,6 +499,7 @@ def issqmat(M):
 ###############################################################################
 ###############################################################################
 
+# Arranges the elements of the graph in a circle and draws arrows between them
 def connectogram(R,L=[None],title="",size=[7,7]):
     
     n = R.shape[0]
@@ -467,7 +507,7 @@ def connectogram(R,L=[None],title="",size=[7,7]):
         L = [str(i) for i in range(n)]
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=.3,tscaledef=70,size=size)
+    G = Graph(rdef=.3,tscaledef=15,size=size)
     
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str([L[i]][0]),z=2)
@@ -478,45 +518,37 @@ def connectogram(R,L=[None],title="",size=[7,7]):
     plt.title(title)
     return G
 
-def connectogramUndir(R,L=[None],title="",size=[7,7]):
+# Arranges the elements of the graph in a circle and draws lines between them
+def connectogramUndir(R,L=[None],title="",size=[7,7],curve=False):
     
     n = R.shape[0]
     if len(L) != n:
         L = [str(i) for i in range(n)]
 
+    for x in range(n):
+        for y in range(n):
+            if R[y,x] != 0:
+                R[x,y] = R[y,x]
+                R[y,x] = 0
+
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=.3,tscaledef=70,size=size)
+    G = Graph(rdef=.3,tscaledef=15,size=size)
     
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str([L[i]][0]),z=2)
 
     G.Mat = R
     G.drawNodes()
-    G.drawLines(term=G.rdef*1.1)
-    plt.title(title)
-    makeUndir(G)
-    return G
-
-def connectogramCurvesUndir(R,L=[None],title="",size=[7,7]):
-    
-    n = R.shape[0]
-    if len(L) != n:
-        L = [str(i) for i in range(n)]
-    
-    xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=.3,tscaledef=70,size=size)
-    
-    for i,pos in enumerate(xy):
-        G.addNode(pos,text=str([L[i]][0]),z=2)
-    G.Mat = R
-    G.drawNodes()
-    for i in np.argwhere(R != 0):
-        if i[0] == i[1]:
-            continue
-        if i[0] - i[1] > (n//2):
-            bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=-1)
-        else:
-            bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=1)
+    if curve == False:
+        G.drawLines()
+    if curve == True:
+        for i in np.argwhere(R != 0):
+            if i[0] == i[1]:
+                continue
+            if i[0] - i[1] > (n//2):
+                bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=-1)
+            else:
+                bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=1)
     plt.title(title)
     makeUndir(G)
     return G
@@ -577,5 +609,5 @@ def test():
         G.ax.add_patch(e)
         
     ## Resize after the fact
-    G.resize([8,8])
-test()
+    #G.resize([12,12])
+#test()
