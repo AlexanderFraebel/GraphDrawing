@@ -11,8 +11,12 @@ def randAjdMat(N=5):
 
 # Doesn't work need to find a better method
 def regularGraph(N=5,d=2,lim=100):
-    if d > N:
+    ## Can't connect to more verticies than exist
+    if d > (N-1):
         raise ValueError("Degree of a regular graph must be less than its size.")
+    ## The number of vertices of odd degree must be even
+    if N % 2 == 1 and d % 2 == 1:
+        raise ValueError("No such graph due to handshaking lemma.")
     ctr = 0
     cr = False
     while cr == False:
@@ -25,6 +29,7 @@ def regularGraph(N=5,d=2,lim=100):
             if len(i) != d:
                 cr = False
                 break
+    #print(ctr)
     return R
     
 def genmat(N=5,d=2):
@@ -63,10 +68,10 @@ N = 9
 d = 2
 D = regularGraph(N,d)
 R = MatFromDict(D)
-connectogramUndir(R,title="Degree {} Regular Graph".format(d),curve=True)
+connectogramUndir(R,title="Degree {} Regular Graph".format(d),curve=1)
 
-N = 11
-d = 3
+N = 7
+d = 4
 D = regularGraph(N,d)
 R = MatFromDict(D)
-connectogramUndir(R,title="Degree {} Regular Graph".format(d),curve=True)
+connectogramUndir(R,title="Degree {} Regular Graph".format(d),curve=0,lineCol='green')

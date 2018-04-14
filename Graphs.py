@@ -143,8 +143,6 @@ class Node:
 
         self.circ = plt.Circle(self.xy,radius = self.r, fc = self.col,zorder=self.z)
 
-#class AdjMat:
-#    def __init__(self,)
 ###############################################################################
 ###############################################################################
 ##
@@ -216,7 +214,7 @@ def loop(A,r=.4,th=0,rot=0,col="black",width=1,headwidth=.2,headlength=.2,z=0):
 ###############################################################################
 ###############################################################################
 
-# Create arbitrary Bezier splines with either one or two control points
+# Define arbitrary Bezier splines with either one or two control points
 def bezierQuad(A,B,C):
     t = np.linspace(0,1,50)
     P0 = perpt(A,B,t)
@@ -231,7 +229,7 @@ def bezierCube(A,B,C,D):
     
 # Simplified Bezier spline. Control point is at a distance perpendicular from
 # the midpoint of the connecting line.
-def bezierCurve(A,B,r=1):
+def bezierCurve(A,B,r=1,color="black",lw=2,z=0):
     t = np.linspace(0,1,50)
     mdpt = midpt(A,B)
     if A.x == B.x:
@@ -245,11 +243,11 @@ def bezierCurve(A,B,r=1):
     P1 = perpt(R,B,t)
     
     out = perpt(P0,P1,t)
-    plt.plot(out[0],out[1],color="black",lw=2,zorder=0)
+    plt.plot(out[0],out[1],color=color,lw=lw,zorder=z)
     return out
     
 # Similar but for cublic splines
-def bezierCurveCubic(A,B,r1=1,r2=1):
+def bezierCurveCubic(A,B,r1=1,r2=1,color="black",lw=2,z=0):
     
     t = np.linspace(0,1,50)
     
@@ -285,7 +283,7 @@ def bezierCurveCubic(A,B,r1=1,r2=1):
     Q1 = perpt(P1,P2,t)
     
     out = perpt(Q0,Q1,t)
-    plt.plot(out[0],out[1],color="black",lw=2,zorder=0)
+    plt.plot(out[0],out[1],color=color,lw=lw,zorder=z)
     return out
 
 # Arc drawing functions
@@ -528,7 +526,9 @@ def connectogram(R,L=[None],title="",size=[7,7]):
     return G
 
 # Arranges the elements of the graph in a circle and draws lines between them
-def connectogramUndir(R,L=[None],title="",size=[7,7],curve=False):
+# Option to curve the connections
+def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,
+                      nodeCol = (.53, .81, .94), lineCol = "black"):
     
     n = R.shape[0]
     if len(L) != n:
@@ -541,23 +541,23 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=False):
                 R[y,x] = 0
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=.3,tscaledef=15,size=size)
+    G = Graph(rdef=.3,tscaledef=15,size=size,coldef = nodeCol)
     
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str([L[i]][0]),z=2)
 
     G.Mat = R
     G.drawNodes()
-    if curve == False:
-        G.drawLines()
-    if curve == True:
+    if curve == 0:
+        G.drawLines(col=lineCol)
+    if curve != 0:
         for i in np.argwhere(R != 0):
             if i[0] == i[1]:
                 continue
             if i[0] - i[1] > (n//2):
-                bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=-1)
+                bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=-curve,color=lineCol)
             else:
-                bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=1)
+                bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=curve,color=lineCol)
     plt.title(title)
     makeUndir(G)
     return G
