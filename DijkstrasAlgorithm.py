@@ -12,7 +12,7 @@ def randAjdMat(N=5):
     R = np.zeros([N,N],dtype="int")
     for x in range(N):
         for y in range(N):
-            R[x,y] = random.choice([1,1,0,0,0,0,0])
+            R[x,y] = random.choice([1,0,0,0,0,0])
     return R
 
 ###############################################################################
@@ -85,6 +85,12 @@ def dijkstra(M,s=0):
 
     return d,pathlist
 
+###############################################################################
+##
+## Create an example
+##
+###############################################################################
+
 def DijkstraExample():
     X = randAjdMat(9)
     #print(X)
@@ -95,6 +101,9 @@ def DijkstraExample():
     #print(di[0])
     for pos,val in enumerate(di[1]):
         s = ""
+        if len(val) == 0:
+            print("{}: Not Connected".format(pos))
+            continue
         for i in val:
             s += str(i) + " \u2192 "
         print("{}: {}".format(pos,s[:-2]))
@@ -106,4 +115,4 @@ def DijkstraExample():
             connectArr(G.Nodes[i[j]],G.Nodes[i[j+1]],col='red',z=1,width=2)
 
 
-DijkstraExample()
+#DijkstraExample()

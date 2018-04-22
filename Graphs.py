@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import itertools
+import random
 import matplotlib.patches as patches
 
 ###############################################################################
@@ -87,7 +87,7 @@ class Graph:
             plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale*d,
                  ha='center',va='center',zorder=i.z)
         for i in np.argwhere(self.Mat != 0):
-            connect(self.Nodes[i[0]],self.Nodes[i[1]])
+            connect(self.Nodes[i[0]],self.Nodes[i[1]],width=2)
 
     def drawNodes(self):
         d = np.sqrt(self.size[0]**2+self.size[1]**2)/2
@@ -312,30 +312,58 @@ def arcXY(xy,r,th=[0,np.pi],n=100):
 ###############################################################################
 ###############################################################################
     
-# Creates a dictionary of out-edges based on either a graph or a matrix
-def edgeDict(G):
-    
-    edges = dict()
-    if type(G) == Graph:
-        N = len(G.Nodes)
-        for i in range(N):
-            edges[str(i)] = []
-            for j in range(N):
-                if G.Mat[i,j] != 0:
-                    edges[str(i)] += [j]
-        return edges
-    elif issqmat(G):
-        N = np.shape(G)[0]
-        for i in range(N):
-            edges[str(i)] = []
-            for j in range(N):
-                if G[i,j] != 0:
-                    edges[str(i)] += [j]
-        return edges
-    else:
-        raise ValueError("Input must be Graph object or ndarray")
-        
 
+# Create a graph where every vertex has the same number of neighbors
+def regularGraph(N=5,d=2,lim=100):
+    ## Can't connect to more verticies than exist
+    if d > (N-1):
+        raise ValueError("Degree of a regular graph must be less than its size.")
+    ## The number of vertices of odd degree must be even
+    if N % 2 == 1 and d % 2 == 1:
+        raise ValueError("No such graph due to handshaking lemma.")
+    ctr = 0
+    cr = False
+    while cr == False:
+        ctr += 1
+        if ctr > lim:
+            # Prevent function from running too long if accidentally given a 
+            # excessive input
+            raise ValueError("Unable to find matching graph.")
+        cr = True
+        # Create a possibly regular graph. Retry if it isn't regular.
+        R = genregmat(N,d)
+        for i in R.values():
+            if len(i) != d:
+                cr = False
+                break
+    #print(ctr)
+    return MatFromDict(R)
+
+# Method for generating an adjacency matrix that is fairly likely to be 
+# regular. Simply picks random connections and fills in a dictionary with them.
+def genregmat(N=5,d=2):
+    S = [i for i in range(0,N)]
+    D = {}
+    for i in range(N):
+        D[str(i)] = []
+    for i in range(N):
+        if len(S) == 0:
+            break
+        l = len(D[str(i)])
+        if l < d:
+
+            S = [x for x in S if x != i]
+            n = min(d-l,len(S))
+            r = random.sample(S,n)
+            for v in r:
+                D[str(i)].append(v)
+                if i not in D[str(v)]:
+                    D[str(v)].append(i)
+            for pos, val in enumerate(S):
+                if len(D[str(val)]) == d:
+                    del S[pos]
+
+    return D
 
 
 # Make every edge in a graph into an undirected edge
@@ -406,7 +434,43 @@ def checkCyclic(R):
                 emptyRow = False
         return True
 
+###############################################################################
+###############################################################################
+##
+## GRAPH REPRESENTATION
+##
+###############################################################################
+###############################################################################
 
+# Creates a dictionary of out-edges based on either a graph or a matrix
+def edgeDict(G):
+    
+    edges = dict()
+    if type(G) == Graph:
+        N = len(G.Nodes)
+        for i in range(N):
+            edges[str(i)] = []
+            for j in range(N):
+                if G.Mat[i,j] != 0:
+                    edges[str(i)] += [j]
+        return edges
+    elif issqmat(G):
+        N = np.shape(G)[0]
+        for i in range(N):
+            edges[str(i)] = []
+            for j in range(N):
+                if G[i,j] != 0:
+                    edges[str(i)] += [j]
+        return edges
+    else:
+        raise ValueError("Input must be Graph object or ndarray")
+        
+# Convert a dictionary of edges into an adjacency matrix
+def MatFromDict(D):
+    R = np.zeros([len(D),len(D)])
+    for key, value in D.items():
+        R[int(key),value] = 1
+    return R
 
 ###############################################################################
 ###############################################################################
@@ -507,7 +571,8 @@ def issqmat(M):
 ###############################################################################
 
 # Arranges the elements of the graph in a circle and draws arrows between them
-def connectogram(R,L=[None],title="",size=[7,7]):
+def connectogram(R,L=[None],title="",size=[7,7],nodeSize=.3,
+                      nodeCol = (.53, .81, .94), lineSize  = 2, lineCol = "black"):
     
     n = R.shape[0]
     if len(L) != n:
@@ -521,14 +586,14 @@ def connectogram(R,L=[None],title="",size=[7,7]):
 
     G.Mat = R
     G.drawNodes()
-    G.drawArrows(term=G.rdef*1.1)
+    G.drawArrows(term=G.rdef*1.1,col=lineCol,wd=lineSize)
     plt.title(title)
     return G
 
 # Arranges the elements of the graph in a circle and draws lines between them
 # Option to curve the connections
-def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,
-                      nodeCol = (.53, .81, .94), lineCol = "black"):
+def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
+                      nodeCol = (.53, .81, .94), lineSize  = 2, lineCol = "black"):
     
     n = R.shape[0]
     if len(L) != n:
@@ -541,7 +606,7 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,
                 R[y,x] = 0
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=.3,tscaledef=15,size=size,coldef = nodeCol)
+    G = Graph(rdef=nodeSize,tscaledef=15,size=size,coldef = nodeCol)
     
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str([L[i]][0]),z=2)
