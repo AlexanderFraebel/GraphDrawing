@@ -3,20 +3,6 @@ import math
 
 ###############################################################################
 ##
-## For defining the graph itself
-##
-###############################################################################
-
-
-def randAjdMat(N=5):
-    R = np.zeros([N,N],dtype="int")
-    for x in range(N):
-        for y in range(N):
-            R[x,y] = random.choice([1,0,0,0,0,0])
-    return R
-
-###############################################################################
-##
 ## IMPLEMENTING THE ALGORITHM
 ##
 ###############################################################################
@@ -92,12 +78,13 @@ def dijkstra(M,s=0):
 ###############################################################################
 
 def DijkstraExample():
-    X = randAjdMat(9)
+    X = connectedGraph(11)
     #print(X)
     N = 0
     di = dijkstra(X,N)
     G = connectogram(X,[i for i in range(8)],
-                       title="Shortest Paths from Node {}".format(N))
+                       title="Shortest Paths from Node {}".format(N),
+                       nodeSize=.2,lineSize=1)
     #print(di[0])
     for pos,val in enumerate(di[1]):
         s = ""
@@ -112,7 +99,7 @@ def DijkstraExample():
         if len(i) == 1:
             continue
         for j in range(len(i)-1):
-            connectArr(G.Nodes[i[j]],G.Nodes[i[j+1]],col='red',z=1,width=2)
+            connectArr(G.Nodes[i[j]],G.Nodes[i[j+1]],col='red',z=1,width=1)
 
 
-#DijkstraExample()
+DijkstraExample()

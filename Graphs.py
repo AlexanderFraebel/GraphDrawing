@@ -108,7 +108,19 @@ class Graph:
             if i[0] == i[1]:
                 continue
             connect(self.Nodes[i[0]],self.Nodes[i[1]],col=col,width=wd)
-            
+    
+    def drawCurve(self,r=1,col="black",wd=2):
+        for i in np.argwhere(self.Mat != 0):
+            if i[0] == i[1]:
+                continue
+            bezierCurve(self.Nodes[i[0]],self.Nodes[i[1]],r=1,col=col,lw=wd)
+    
+    # Return the coordinates of each node
+    def nodePos(self):
+        L = []
+        for i in self.Nodes:
+            L.append(i.xy)
+        return L
             
 ## The Node class has the properties of each vertex of the graph.
 class Node:
@@ -311,7 +323,23 @@ def arcXY(xy,r,th=[0,np.pi],n=100):
 ##
 ###############################################################################
 ###############################################################################
+
+# A randomized adjacency matrix
+def randAjdMat(N=5,directed=True,prob=.2):
+    R = np.zeros([N,N],dtype="int")
     
+    if directed == True:
+        for x in range(N):
+            for y in range(N):
+                R[x,y] = np.random.choice([0,1],p=[1-prob,prob])
+    if directed == False:
+        for x in range(N):
+            for y in range(x):
+                r = np.random.choice([0,1],p=[1-prob,prob])
+                R[x,y],R[y,x] = r
+                
+    return R
+
 
 # Create a graph where every vertex has the same number of neighbors
 def regularGraph(N=5,d=2,lim=100):
@@ -365,6 +393,12 @@ def genregmat(N=5,d=2):
 
     return D
 
+def connectedGraph(N,directed=True):
+    while True:
+        t = randAjdMat(N,directed=directed)
+        if len(explore(t,0)) == N:
+            return t
+        
 
 # Make every edge in a graph into an undirected edge
 def makeUndir(G):
@@ -433,6 +467,46 @@ def checkCyclic(R):
                     break
                 emptyRow = False
         return True
+
+# Extract a subgraph
+def subgraph(R,L):
+    if issqmat(R):
+        t = R.copy()
+        t = t[L,:]
+        t = t[:,L]
+        return t
+
+
+# Explore the adjacency matrix staring at vertex x using a breadth first search
+# and return all the a list of all reachable vertices
+def bfs(R,x):
+    checked = set()
+    working = [x]
+    d = edgeDict(R)
+    while len(working) > 0:
+        cur = working.pop(0)
+        for i in d[str(cur)]:
+            if i not in checked:
+                working.append(i)
+        checked.add(cur)
+    return sorted(list(checked))
+
+# For each element check if it is part of a known connected component. If it is
+# check the next one. If it isn't then explore the graph from that vertex and
+# return the verticies of the connected component it is a part of.
+def connectedComponents(R):
+    n = np.shape(R)[0]
+    out, L = [],[]
+    ctr = 0
+    while len(L) != n:
+        if ctr in L:
+            ctr += 1
+            continue
+        else:
+            T = bfs(R,ctr)
+            out.append(T)
+            L += T
+    return out
 
 ###############################################################################
 ###############################################################################
@@ -579,7 +653,7 @@ def connectogram(R,L=[None],title="",size=[7,7],nodeSize=.3,
         L = [str(i) for i in range(n)]
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=.3,tscaledef=15,size=size)
+    G = Graph(rdef=nodeSize,tscaledef=15,size=size,coldef = nodeCol)
     
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str([L[i]][0]),z=2)
@@ -617,9 +691,10 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
         G.drawLines(col=lineCol)
     if curve != 0:
         for i in np.argwhere(R != 0):
+            #print(i,abs(i[0] - i[1]))
             if i[0] == i[1]:
                 continue
-            if i[0] - i[1] > (n//2):
+            if abs(i[0] - i[1]) >= (n//2):
                 bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=-curve,color=lineCol)
             else:
                 bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=curve,color=lineCol)
