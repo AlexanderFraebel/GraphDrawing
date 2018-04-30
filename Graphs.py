@@ -12,15 +12,7 @@ import matplotlib.patches as patches
 ###############################################################################
 
 class Graph:
-    def __init__(self,xlims=[-3,3],ylims=[-3,3],size=[7,7],
-                 rdef=.5,tscaledef=10,coldef=(.53, .81, .94)):
-
-        ## Setup the plot area
-        self.fig = plt.figure()
-        self.fig.set_size_inches(size[0], size[1])
-        self.ax = plt.axes(xlim=xlims, ylim=ylims)
-        self.ax.axis('off')
-        self.size = size
+    def __init__(self,rdef=.5,tscaledef=10,coldef=(.53, .81, .94)):
         
         # Set a few default characteristics
         self.rdef = rdef
@@ -48,10 +40,6 @@ class Graph:
         t[:-1,:-1] = self.Mat
         self.Mat = t
         
-    def resize(self,size=[7,7]):
-        self.size = size
-        self.fig.set_size_inches(size[0], size[1])
-
     ## Create edges. By default just sets them equal to 1.
     def addEdges(self,A,B,D=[None]):
         if any(i == None for i in D):
@@ -80,19 +68,16 @@ class Graph:
         self.Mat[B,A] = 0
 
     # Simple drawing functions for common situations
-    def QuickDraw(self):
-        d = np.sqrt(self.size[0]**2+self.size[1]**2)/2
+    def QuickDraw(self,fig,ax):
+        self.drawNodes(fig,ax)
+        self.drawLines()
+        
+    def drawNodes(self,fig,ax):
+        s = fig.get_size_inches()
+        d = np.sqrt(s[0]**2+s[1]**2)/2
         for i in self.Nodes:
-            self.ax.add_patch(i.circ)
-            plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale*d,
-                 ha='center',va='center',zorder=i.z)
-        for i in np.argwhere(self.Mat != 0):
-            connect(self.Nodes[i[0]],self.Nodes[i[1]],width=2)
-
-    def drawNodes(self):
-        d = np.sqrt(self.size[0]**2+self.size[1]**2)/2
-        for i in self.Nodes:
-            self.ax.add_patch(i.circ)
+            circ = plt.Circle(i.xy,radius = i.r, fc = i.col,zorder=i.z)
+            ax.add_patch(circ)
             plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale*d,
                  ha='center',va='center',zorder=i.z)
     
@@ -115,6 +100,7 @@ class Graph:
                 continue
             bezierCurve(self.Nodes[i[0]],self.Nodes[i[1]],r=1,col=col,lw=wd)
     
+        
     # Return the coordinates of each node
     def nodePos(self):
         L = []
@@ -133,8 +119,7 @@ class Node:
         self.z = z
         self.text = text
         self.tscale = tscale
-        self.circ = plt.Circle(self.xy,radius = self.r, fc = self.col,zorder=self.z)
-
+        
     def update(self,xy=None,r=None,col=[None],text=None,tscale=None,z=None):
         if xy != None:
             self.xy = xy
@@ -153,8 +138,23 @@ class Node:
         if tscale != None:
             self.tscale = tscale
 
-        self.circ = plt.Circle(self.xy,radius = self.r, fc = self.col,zorder=self.z)
 
+
+###############################################################################
+###############################################################################
+##
+## CREATE PLOTS
+##
+###############################################################################
+###############################################################################
+
+def makeCanvas(xlim=[-3,3],ylim=[-3,3],size=[7,7]):
+    fig = plt.figure()
+    fig.set_size_inches(size[0], size[1])
+    ax = plt.axes(xlim=xlim, ylim=ylim)
+    ax.axis('off')
+    return fig, ax
+    
 ###############################################################################
 ###############################################################################
 ##
@@ -396,7 +396,7 @@ def genregmat(N=5,d=2):
 def connectedGraph(N,directed=True):
     while True:
         t = randAjdMat(N,directed=directed)
-        if len(explore(t,0)) == N:
+        if len(bfs(t,0)) == N:
             return t
         
 
@@ -648,26 +648,30 @@ def issqmat(M):
 def connectogram(R,L=[None],title="",size=[7,7],nodeSize=.3,
                       nodeCol = (.53, .81, .94), lineSize  = 2, lineCol = "black"):
     
+    fig, ax = makeCanvas(size=size)
+    
     n = R.shape[0]
     if len(L) != n:
         L = [str(i) for i in range(n)]
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=nodeSize,tscaledef=15,size=size,coldef = nodeCol)
+    G = Graph(rdef=nodeSize,tscaledef=15,coldef = nodeCol)
     
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str([L[i]][0]),z=2)
 
     G.Mat = R
-    G.drawNodes()
+    G.drawNodes(fig,ax)
     G.drawArrows(term=G.rdef*1.1,col=lineCol,wd=lineSize)
     plt.title(title)
-    return G
+    return G, fig, ax
 
 # Arranges the elements of the graph in a circle and draws lines between them
 # Option to curve the connections
 def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
                       nodeCol = (.53, .81, .94), lineSize  = 2, lineCol = "black"):
+    
+    fig, ax = makeCanvas(size=size)
     
     n = R.shape[0]
     if len(L) != n:
@@ -680,13 +684,13 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
                 R[y,x] = 0
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=nodeSize,tscaledef=15,size=size,coldef = nodeCol)
+    G = Graph(rdef=nodeSize,tscaledef=15,coldef = nodeCol)
     
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str([L[i]][0]),z=2)
 
     G.Mat = R
-    G.drawNodes()
+    G.drawNodes(fig,ax)
     if curve == 0:
         G.drawLines(col=lineCol)
     if curve != 0:
@@ -700,7 +704,7 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
                 bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=curve,color=lineCol)
     plt.title(title)
     makeUndir(G)
-    return G
+    return G, fig, ax
     
     
 ###############################################################################
@@ -713,7 +717,7 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
 def test():
 
     # Make a graph
-    G = Graph([-3,3],[-3,3],[7,7],rdef=.5)
+    G = Graph(rdef=.5)
 
     # Add a node with all default properties
     G.addNode()
@@ -733,7 +737,9 @@ def test():
     print(type(G.Mat))
     
     # Use the quickdraw function
-    G.QuickDraw()
+    
+    fig, ax = makeCanvas()
+    G.QuickDraw(fig,ax)
     
     # Use the simplified bezier curve function
     bezierCurve(G.Nodes[0],G.Nodes[1],2)
@@ -750,13 +756,14 @@ def test():
     #Make a loop
     loop(G.Nodes[0],th=.1,rot=.5)
     
-    ## Make changes to the plot area by referring to the .ax property
+    ## Add some other stuff
     angles = np.arange(0, 360 + 45, 45)
     ells = [patches.Ellipse((1, 1), 4, 2, a,zorder=0) for a in angles]
     for e in ells:
         e.set_alpha(0.1)
-        G.ax.add_patch(e)
-        
-    ## Resize after the fact
-    #G.resize([12,12])
+        ax.add_patch(e)
+    
+    # Make another plot
+    fig2, ax2 = makeCanvas(size=[3,3])
+    G.QuickDraw(fig2,ax2)
 #test()

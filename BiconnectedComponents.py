@@ -35,32 +35,40 @@ def biconnected(R,x):
     lowpoint = [np.NAN]*len(d)
     cut = [False]*len(d)
     
-    # Will store and output the connected edges
+    # Will store and output the connected edges and the vertices that define
+    # the components
     edges = []
+    verts = []
     
     # For keeping track of where we are and have been in the graph
     checked = []
     working = [x]
     
     # The explore function is recursive
-    explore(d,x,checked,working,pred,depth,lowpoint,cut,edges)
+    explore(d,x,checked,working,pred,depth,lowpoint,cut,edges,verts)
     
+    # Check if there is anything left
+    v = set()
     if len(edges) > 0:
         print("Component: ",end="")
         while len(edges) > 0:
             w = edges.pop()
+            v.add(w[0])
+            v.add(w[1])
             print(w,end="")
-        print()
+    verts.append(v)
     
+    print("\n\nBiconnected Subgraphs:\n{}".format(verts))
     
     print("\n")
     nodes = [i for i in range(len(d))]
     for i in zip(nodes,pred,depth,lowpoint,cut):
         print(i)
     
-    return depth,lowpoint
+    
+    return depth,lowpoint,verts
 
-def explore(d,x,checked,working,pred,depth,lowpoint,cut,edges):
+def explore(d,x,checked,working,pred,depth,lowpoint,cut,edges,verts):
 
     # Counting the number of children, we only really care about this for the
     # starting point.
@@ -79,8 +87,9 @@ def explore(d,x,checked,working,pred,depth,lowpoint,cut,edges):
                 ch += 1
                 # Store edge between them
                 edges.append((x,i))
+                
                 # Now continue to explore the graph
-                explore(d,working[-1],checked,working,pred,depth,lowpoint,cut,edges)
+                explore(d,working[-1],checked,working,pred,depth,lowpoint,cut,edges,verts)
 
                 # Having finished exploring below it update the lowest point
                 # seen by the children of x
@@ -90,9 +99,13 @@ def explore(d,x,checked,working,pred,depth,lowpoint,cut,edges):
                     cut[x] = True
                     print("Component: ".format(x),end="")
                     w = 0
+                    v = set()
                     while w != (x,i):
                         w = edges.pop()
+                        v.add(w[0])
+                        v.add(w[1])
                         print(w,end="")
+                    verts.append(v)
                     print()
                 
                 
@@ -111,7 +124,7 @@ def explore(d,x,checked,working,pred,depth,lowpoint,cut,edges):
 ###############################################################################
 ###############################################################################
         
-G = Graph(xlims=[-4,4],ylims=[-4,4],rdef=.2,size=[10,10])
+G = Graph(rdef=.2)
 
 pos = [[-3,2],[-3,1],[-2,1],[-2,0],[-1,-1],
        [-1,0],[0,1],[0,0],[1,0],[-1,2],[0,2],
@@ -125,8 +138,9 @@ G.addEdgesBi(
         [0,0,1,2,3,4,5,6,6,6,9,9,11,10,12,13,14,14],
         [1,2,3,3,4,5,6,7,8,9,10,11,10,12,8,8,12,8])
 
-#G.delNode(10)
-G.QuickDraw()
+
+fig, ax = makeCanvas(xlim=[-4,4],ylim=[-4,4],size=[10,10])
+G.QuickDraw(fig,ax)
 
 
 #d = dfs(G.Mat,5)
@@ -135,7 +149,7 @@ G.QuickDraw()
     #plt.text(p[0]+.05,p[1]+.3,str(j),color='red',size="x-large")
 
     
-d,l = biconnected(G.Mat,5)
+d,l,v = biconnected(G.Mat,5)
 for i in range(15):
     p = G.Nodes[i].xy
     plt.text(p[0]+.05,p[1]+.3,str(d[i]),color='red',size="x-large")

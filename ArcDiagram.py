@@ -4,11 +4,13 @@ import numpy as np
 def arcDiagram(R,L=[None],title="",size=[7,7],nodeSize=.3,
                       nodeCol = (.53, .81, .94), lineSize  = 2, lineCol = "black"):
     
+    fig, ax = makeCanvas(xlim=[-3,3],ylim=[-3,3],size=size)
+    
     n = R.shape[0]
     if len(L) != n:
         L = [str(i) for i in range(n)]
 
-    G = Graph(rdef=nodeSize,tscaledef=15,size=size,coldef = nodeCol)
+    G = Graph(rdef=nodeSize,tscaledef=15,coldef = nodeCol)
     
     pos = np.linspace(-2.5,2.5,n)
     
@@ -26,7 +28,8 @@ def arcDiagram(R,L=[None],title="",size=[7,7],nodeSize=.3,
         a = arcXY([m,nodeSize/3],r=d)
         plt.plot(a[0],a[1],color=lineCol,zorder=0,lw=lineSize)
         
-    G.drawNodes()
+    G.drawNodes(fig,ax)
+    return G, fig, ax
     
 R = randAjdMat(7)
 arcDiagram(R)

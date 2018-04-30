@@ -17,7 +17,7 @@ def disconnected():
 
 #R = regularGraph(17,2)
 R = disconnected()
-G = connectogramUndir(R,lineSize=1,nodeSize=.2,curve=.5)
+G, fig, ax = connectogramUndir(R,lineSize=1,nodeSize=.2,curve=.5)
 com = connectedComponents(R)
 print(subgraph(R,com[0]))
 print(com)
@@ -27,4 +27,4 @@ for x in com:
     for i in x:
         G.Nodes[i].update(col=cls[ctr])
     ctr += 1
-G.drawNodes()
+G.drawNodes(fig,ax)
