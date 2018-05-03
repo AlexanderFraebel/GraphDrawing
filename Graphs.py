@@ -400,29 +400,20 @@ def connectedGraph(N,directed=True):
             return t
         
 
-# Make every edge in a graph into an undirected edge
-def makeUndir(G):
-    if type(G) == Graph:
-        N = len(G.Nodes)
+# Make a copy of an adjacency matrix modified so that every edge is bidirectional
+def undirected(R):
+    M = R.copy()
+    if issqmat(R):
+        N = np.shape(R)[0]
         for x in range(N):
             for y in range(x):
-                m = max(G.Mat[x,y], G.Mat[y,x])
-                G.Mat[x,y], G.Mat[y,x] = m,m
-    elif issqmat(G):
-        N = np.shape(G)[0]
-        for x in range(N):
-            for y in range(x):
-                m = max(G[x,y], G[y,x])
-                G[x,y], G[y,x] = m,m        
+                m = max(M[x,y], M[y,x])
+                M[x,y], M[y,x] = m,m        
+    return M
 
+# Check if a graph has edges in both directions
 def isUndir(G):
-    if type(G) == Graph:
-        N = len(G.Nodes)
-        for x in range(N):
-            for y in range(x):
-                if G.Mat[x,y] != G.Mat[y,x]:
-                    return False
-    elif issqmat(G):
+    if issqmat(G):
         N = np.shape(G)[0]
         for x in range(N):
             for y in range(x):
@@ -507,6 +498,37 @@ def connectedComponents(R):
             out.append(T)
             L += T
     return out
+
+def degreeUndir(G):
+    R = undirected(G)
+    N = np.shape(R)[0]
+    deg = [0]*N
+    for i in range(N):
+        for j in range(i+1):
+            if R[i,j] != 0:
+                deg[i] += 1
+                deg[j] += 1
+    return deg
+    
+def outdegree(R):
+    N = np.shape(R)[0]
+    deg = [0]*N
+    for i in range(N):
+        for j in range(N):
+            if R[i,j] != 0:
+                deg[i] += 1
+
+    return deg
+
+def indegree(R):
+    N = np.shape(R)[0]
+    deg = [0]*N
+    for i in range(N):
+        for j in range(N):
+            if R[i,j] != 0:
+                deg[j] += 1
+    return deg
+                
 
 ###############################################################################
 ###############################################################################
@@ -766,4 +788,24 @@ def test():
     # Make another plot
     fig2, ax2 = makeCanvas(size=[3,3])
     G.QuickDraw(fig2,ax2)
+    
+    fig3, ax3 = makeCanvas(size=[5,5])
+    
+    G1 = Graph(rdef=.3)
+    ps = [[0,0],[0,1],[2,0],[1,-1]]
+    for i in range(len(ps)):
+        G1.addNode(ps[i],text=str(i))
+    
+    G1.addEdgesBi([2,2,2,1],[0,1,3,1])
+    
+    G1.QuickDraw(fig3,ax3)
+    loop(G1.Nodes[1],r=.3,th=1.2,rot=.5)
+    
+    
+    print(outdegree(G1.Mat))
+    print(indegree(G1.Mat))
+    print(degreeUndir(G1.Mat))
+    
+    
+    
 #test()
