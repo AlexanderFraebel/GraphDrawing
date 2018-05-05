@@ -136,4 +136,4 @@ def testfunc():
     G = hypercubeGraph()
     G.QuickDraw(fig1,ax1)
 
-testfunc()
+#testfunc()
