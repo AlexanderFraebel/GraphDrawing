@@ -1,6 +1,5 @@
 from Graphs import *
 
-
 def disconnected():
     R = np.zeros([18,18])
     for i in range(3):
@@ -14,17 +13,15 @@ def disconnected():
     return R
 
 
-
-#R = regularGraph(17,2)
 R = disconnected()
-G, fig, ax = connectogramUndir(R,lineSize=1,nodeSize=.2,curve=.5)
 com = connectedComponents(R)
-print(subgraph(R,com[0]))
 print(com)
+G, fig, ax = connectogramUndir(R,lineSize=1,nodeSize=.2,curve=.5)
+
 cls = ['red','orange','yellow','green','blue','purple']
 ctr = 0
 for x in com:
     for i in x:
-        G.Nodes[i].update(col=cls[ctr])
+        G.colors[i] = cls[ctr]
     ctr += 1
 G.drawNodes(fig,ax)

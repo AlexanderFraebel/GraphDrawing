@@ -1,6 +1,9 @@
 import numpy as np
 from Graphs import *
 
+## I DON'T THINK THIS WORKS? ##
+
+
 def makeAcyclic(N):
     R = np.zeros([N,N])
     for x in range(N):
@@ -44,7 +47,7 @@ def pathMatrix(A):
 
 def transitiveReduce(P):
     t = P.copy()
-    N = R.shape[0]
+    N = np.shape(R)[0]
     for j in range(N):
         for i in range(N):
             if t[i,j] == 1:

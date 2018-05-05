@@ -45,18 +45,6 @@ def pathMatrix(A):
 
     return out
 
-def connectogram(L,R):
-    print(R)
-    n = len(L)
-    xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=.3,tscaledef=70)
-    
-    for i,pos in enumerate(xy):
-        G.addNode(pos,text=str([L[i]][0]),z=2)
-    
-    G.Mat = R
-    G.drawNodes()
-    G.drawArrows()
     
     
 def test():
@@ -64,6 +52,6 @@ def test():
     L = string.ascii_uppercase[:N]
     R = randAjdMat(N)
     P = pathMatrix(R)
-    connectogram(L,R)
-    connectogram(L,P)
+    connectogram(R,L)
+    connectogram(P,L)
 test()

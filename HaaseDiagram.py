@@ -31,8 +31,8 @@ def HaaseDivisibility(L,title=None,H=None,sc=.4,ptsz=.05,
         n = primeFactors(i)
         lvls[n].append(i)
     
-    G = Graph([-.4,1.4],[-.1,sc*len(lvls)],[12,12],rdef=ptsz,tscaledef=250)
-    
+    G = Graph(rdef=ptsz,tscaledef=5)
+    fig,ax = makeCanvas([-.4,1.4],[-.1,sc*len(lvls)],[12,12])
 
     y = 0
     ## We'll use these to store some information about the previous level
@@ -70,12 +70,13 @@ def HaaseDivisibility(L,title=None,H=None,sc=.4,ptsz=.05,
                 for valOLD,xposOLD,yposOLD in XYold:
                     if val % valOLD == 0:
                         if H != None and H % val == 0 and H % valOLD == 0:
-                            connectPts(xpos,ypos,xposOLD,yposOLD,width=2,col='red')
+                            connect([xpos,ypos],[xposOLD,yposOLD],width=2,col='red')
                         else: 
-                            connectPts(xpos,ypos,xposOLD,yposOLD,width=2)
+                            connect([xpos,ypos],[xposOLD,yposOLD],width=2)
         
         y += sc
-    G.QuickDraw()
+    G.QuickDraw(fig,ax)
+    G.drawText(fig,ax)
     if title != None:
         plt.savefig(title,dpi=100)
     print(lvls)

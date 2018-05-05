@@ -27,7 +27,7 @@ def diameter(R):
     return max(L)
 
 R = regularGraph(10,2)
-G = connectogramUndir(R)
+G,fig,ax = connectogramUndir(R)
 print("Eccentricity of Each Node".format(eccentricity(R)))
 print(radius(R))
 print(diameter(R))

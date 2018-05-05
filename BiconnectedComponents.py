@@ -3,28 +3,6 @@ from Graphs import *
 ## Lowpoint of vertex "v" is the lowest depth of all descendats of "v" and of
 ## the neighbors of "v" other than its parent (in the dfs ordering)
 
-## Depth first search
-def dfs(R,x):
-    checked = []
-    working = [x]
-    depth = []
-    d = edgeDict(R)
-    while len(working) > 0:
-        cur = working[-1]
-        new = False
-        for i in d[str(cur)]:
-            if i not in checked and i not in working:
-                working.append(i)
-                new = True
-                break
-        if new == False:
-            checked.append(working.pop())
-            depth.append([cur,len(working)])
-    #print(depth)
-
-
-    return depth
-
 def biconnected(R,x):
     # Create a dictionary of edges
     d = edgeDict(R)
@@ -151,7 +129,7 @@ G.QuickDraw(fig,ax)
     
 d,l,v = biconnected(G.Mat,5)
 for i in range(15):
-    p = G.Nodes[i].xy
+    p = G.pos[i]
     plt.text(p[0]+.05,p[1]+.3,str(d[i]),color='red',size="x-large")
     plt.text(p[0]+.05,p[1]+.5,str(l[i]),color='green',size="x-large")
     

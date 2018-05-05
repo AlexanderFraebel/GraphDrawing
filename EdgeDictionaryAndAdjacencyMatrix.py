@@ -11,8 +11,8 @@ def randAjdMat(N=5):
 
 
 R = randAjdMat(10)
-G = connectogram(R)
 print(R)
+G,fig,ax = connectogram(R)
 
 print("\n\nDict created from Graph object")
 E = edgeDict(G)
@@ -23,3 +23,5 @@ print("\n\nDict created from raw adjacency matrix")
 E = edgeDict(R)
 for k,v in E.items():
     print(k,v)
+    
+    

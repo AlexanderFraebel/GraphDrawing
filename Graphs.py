@@ -3,16 +3,8 @@ import numpy as np
 import random
 import matplotlib.patches as patches
 
-###############################################################################
-###############################################################################
-##
-## Custom objects
-##
-###############################################################################
-###############################################################################
-
 class Graph:
-    def __init__(self,rdef=.5,tscaledef=10,coldef=(.53, .81, .94)):
+    def __init__(self,rdef=.3,tscaledef=1,coldef=(.53, .81, .94)):
         
         # Set a few default characteristics
         self.rdef = rdef
@@ -20,7 +12,16 @@ class Graph:
         self.coldef = coldef
         
         # Prepare a list of nodes
-        self.Nodes = []
+        self.size = 0
+        
+        # Need an easier system to control than each node being an independent
+        # object
+        self.colors = []
+        self.pos = []
+        self.radii = []
+        self.texts = []
+        self.tscales = []
+        self.zpos = []
         
         # Prepare a matrix of connections
         self.Mat = np.asarray([0])
@@ -33,10 +34,18 @@ class Graph:
             tscale = self.tscaledef
         if any(i == None for i in col):
             col = self.coldef
-        self.Nodes.append(Node(xy,r,col,text,tscale,z))
-
+            
+        self.radii.append(r)
+        self.colors.append(col)
+        self.pos.append(xy)
+        self.texts.append(text)
+        self.tscales.append(tscale)
+        self.zpos.append(z)
+        
+        self.size += 1
+  
         # Expand the adjacency matrix
-        t = np.zeros((len(self.Nodes),len(self.Nodes)))
+        t = np.zeros((self.size,self.size))
         t[:-1,:-1] = self.Mat
         self.Mat = t
         
@@ -56,7 +65,12 @@ class Graph:
     
     ## Remove nodes and edges.
     def delNode(self,n):
-        del self.Nodes[n]
+        del self.colors[n]
+        del self.pos[n]
+        del self.radii[n]
+        del self.texts[n]
+        del self.tscales[n]
+        del self.zpos[n]
         self.Mat = np.delete(self.Mat,n,0)
         self.Mat = np.delete(self.Mat,n,1)
     
@@ -73,72 +87,38 @@ class Graph:
         self.drawLines()
         
     def drawNodes(self,fig,ax):
-        s = fig.get_size_inches()
-        d = np.sqrt(s[0]**2+s[1]**2)/2
-        for i in self.Nodes:
-            circ = plt.Circle(i.xy,radius = i.r, fc = i.col,zorder=i.z)
+        for i in range(self.size):
+            circ = plt.Circle(self.pos[i],radius = self.radii[i], 
+                              fc = self.colors[i],zorder=self.zpos[i])
             ax.add_patch(circ)
-            plt.text(i.xy[0],i.xy[1],i.text,size=i.r*i.tscale*d,
-                 ha='center',va='center',zorder=i.z)
+
+    
+    def drawText(self,fig,ax):
+        s = fig.get_size_inches()
+        d = np.sqrt(s[0]**2+s[1]**2)*5
+        for i in range(self.size):
+            plt.text(self.pos[i][0],self.pos[i][1],self.texts[i],
+                     size=self.radii[i]*self.tscales[i]*d,
+                     ha='center',va='center',zorder=self.zpos[i])
     
     def drawArrows(self,col="black",wd=2,hwd=.1,hln=.2,term=None):
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
-            connectArr(self.Nodes[i[0]],self.Nodes[i[1]],
+            connectArr(self.pos[i[0]],self.pos[i[1]],headpos=self.radii[i[1]],
                           width=wd,headwidth=hwd,headlength=hln,z=0,col=col)
     
     def drawLines(self,col="black",wd=2):
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
-            connect(self.Nodes[i[0]],self.Nodes[i[1]],col=col,width=wd)
+            connect(self.pos[i[0]],self.pos[i[1]],col=col,width=wd)
     
     def drawCurve(self,r=1,col="black",wd=2):
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
-            bezierCurve(self.Nodes[i[0]],self.Nodes[i[1]],r=1,col=col,lw=wd)
-    
-        
-    # Return the coordinates of each node
-    def nodePos(self):
-        L = []
-        for i in self.Nodes:
-            L.append(i.xy)
-        return L
-            
-## The Node class has the properties of each vertex of the graph.
-class Node:
-    def __init__(self,xy=[0,0],r=.5,col=(.53, .81, .94),text="",tscale=30,z=1):
-        self.xy = xy
-        self.x = xy[0]
-        self.y = xy[1]
-        self.r = r
-        self.col = col
-        self.z = z
-        self.text = text
-        self.tscale = tscale
-        
-    def update(self,xy=None,r=None,col=[None],text=None,tscale=None,z=None):
-        if xy != None:
-            self.xy = xy
-            self.x = xy[0]
-            self.y = xy[1]
-        if r != None:
-            self.r = r
-        if any(i == None for i in col):
-            pass
-        else:
-            self.col = col
-        if z != None:
-            self.z = z
-        if text != None:
-            self.text = text
-        if tscale != None:
-            self.tscale = tscale
-
-
+            bezierCurve(self.pos[i[0]],self.pos[i[0]],r=1,col=col,lw=wd)
 
 ###############################################################################
 ###############################################################################
@@ -154,7 +134,7 @@ def makeCanvas(xlim=[-3,3],ylim=[-3,3],size=[7,7]):
     ax = plt.axes(xlim=xlim, ylim=ylim)
     ax.axis('off')
     return fig, ax
-    
+
 ###############################################################################
 ###############################################################################
 ##
@@ -162,58 +142,38 @@ def makeCanvas(xlim=[-3,3],ylim=[-3,3],size=[7,7]):
 ##
 ###############################################################################
 ###############################################################################
-
-# Draw straight line connection between nodes or points
-def connect(A,B,col="black",width=1,z=0):
-    if type(A) == Node and type(B) == Node:
-        plt.plot([A.x,B.x],[A.y,B.y],color=col,lw=width,zorder=z)
-    elif type(A) == list and type(B) == list:
-        if len(A) == 2 and len(B) == 2:
-            plt.plot([A[0],B[0]],[A[1],B[1]],color=col,lw=width,zorder=z)
-        else:
-            raise ValueError("A and B must length 2 if given as lists")    
-    elif type(A) == np.ndarray and type(B) == np.ndarray:
-        if len(A) == 2 and len(B) == 2:
-            plt.plot([A[0],B[0]],[A[1],B[1]],color=col,lw=width,zorder=z)
-        else:
-            raise ValueError("A and B must length 2 if given as ndarray")
-    else:
-        raise ValueError("A and B do not match or are not recognized")
-
-# Draw straight line arrow between nodes or points
-# When connecting nodes automatically stops the arrow at the edge of the node
-def connectArr(A,B,col="black",width=1,headwidth=.2,headlength=.2,z=0):
-    if type(A) == Node and type(B) == Node:
-        ter = distpt(A,B,B.r)
-        plt.arrow(A.x,A.y,ter[0]-A.x,ter[1]-A.y,color=col,lw=width,zorder=z,
-                  head_width=headwidth, head_length=headlength,
-                  length_includes_head=True)
-    elif type(A) == list and type(B) == list:
-        if len(A) == 2 and len(B) == 2:
-            plt.arrow(A[0],A[1],B[0]-A[0],B[1]-A[1],color=col,lw=width,zorder=z,
-                  head_width=headwidth, head_length=headlength,
-                  length_includes_head=True)
-        else:
-            raise ValueError("A and B must length 2 if given as lists")  
-    elif type(A) == np.ndarray and type(B) == np.ndarray:
-        if len(A) == 2 and len(B) == 2:
-            plt.arrow(A[0],A[1],B[0]-A[0],B[1]-A[1],color=col,lw=width,zorder=z,
-                  head_width=headwidth, head_length=headlength,
-                  length_includes_head=True)
-        else:
-            raise ValueError("A and B must length 2 if given as ndarray")
-    else:
-        raise ValueError("A and B do not match or are not recognized")
-
             
+def connect(A,B,col="black",width=1,z=0):
+    if type(A) == list and type(B) == list or type(A) == np.ndarray and type(B) == np.ndarray:
+        if len(A) == 2 and len(B) == 2:
+            plt.plot([A[0],B[0]],[A[1],B[1]],color=col,lw=width,zorder=z)
+        else:
+            raise ValueError("A and B must length 2")    
+    else:
+        raise ValueError("A and B do not match or are not recognized")
+
+def connectArr(A,B,col="black",width=1,headpos=0,headwidth=.2,headlength=.2,z=0):
+
+    if type(A) == list and type(B) == list or type(A) == np.ndarray and type(B) == np.ndarray:
+        if len(A) == 2 and len(B) == 2:
+            ter = distpt(A,B,headpos)
+            plt.arrow(A[0],A[1],ter[0]-A[0],ter[1]-A[1],color=col,lw=width,zorder=z,
+                      head_width=headwidth, head_length=headlength,
+                      length_includes_head=True)
+        else:
+            raise ValueError("A and B must length 2")  
+    else:
+        raise ValueError("A and B do not match or are not recognized")
+
+
 # Connection to self
 # Creates a circle the intersects the center of the node
 # th controls the position of the circle and rot controls the position of the
 # arrow around the loop
 def loop(A,r=.4,th=0,rot=0,col="black",width=1,headwidth=.2,headlength=.2,z=0):
     a = np.linspace(0,np.pi*2)
-    x = r*np.cos(a+rot)+A.x+(np.cos(th)*r)
-    y = r*np.sin(a+rot)+A.y+(np.sin(th)*r)
+    x = r*np.cos(a+rot)+A[0]+(np.cos(th)*r)
+    y = r*np.sin(a+rot)+A[1]+(np.sin(th)*r)
     plt.plot(x,y,color=col,lw=width,zorder=z)
     connectArr([x[0],y[0]],[x[1],y[1]],headwidth=.2,headlength=.2,z=z)
 
@@ -221,7 +181,7 @@ def loop(A,r=.4,th=0,rot=0,col="black",width=1,headwidth=.2,headlength=.2,z=0):
 ###############################################################################
 ###############################################################################
 ##
-## BEZIER CURVES
+## CURVED LINES
 ##
 ###############################################################################
 ###############################################################################
@@ -244,13 +204,13 @@ def bezierCube(A,B,C,D):
 def bezierCurve(A,B,r=1,color="black",lw=2,z=0):
     t = np.linspace(0,1,50)
     mdpt = midpt(A,B)
-    if A.x == B.x:
-        R = Node([A.x+r,midY(A,B)])
-    if A.y == B.y:
-        R = Node([midX(A,B),A.y+r])
-    if A.x != B.x and A.y != B.y:
-        ang = np.arctan2((A.y-B.y),(A.x-B.x))+np.pi/2
-        R = Node([r*np.cos(ang)+mdpt[0],r*np.sin(ang)+mdpt[1]])
+    if A[0] == B[0]:
+        R = [A[0]+r,midY(A,B)]
+    if A[1] == B[1]:
+        R = [midX(A,B),A[1]+r]
+    if A[0] != B[0] and A[1] != B[1]:
+        ang = np.arctan2((A[1]-B[1]),(A[0]-B[0]))+np.pi/2
+        R = [r*np.cos(ang)+mdpt[0],r*np.sin(ang)+mdpt[1]]
     P0 = perpt(A,R,t)
     P1 = perpt(R,B,t)
     
@@ -263,20 +223,20 @@ def bezierCurveCubic(A,B,r1=1,r2=1,color="black",lw=2,z=0):
     
     t = np.linspace(0,1,50)
     
-    if A.x == B.x:
-        R1 = Node([A.x+r1,midY(A,B)+r2])
-        R2 = Node([A.x+r1,midY(A,B)-r2])
+    if A[0] == B[0]:
+        R1 = [A[0]+r1,midY(A,B)+r2]
+        R2 = [A[0]+r1,midY(A,B)-r2]
         
-    if A.y == B.y:
-        R1 = Node([midX(A,B)+r2,A.y+r1])
-        R2 = Node([midX(A,B)-r2,A.y+r1])
+    if A[1] == B[1]:
+        R1 = [midX(A,B)+r2,A[1]+r1]
+        R2 = [midX(A,B)-r2,A[1]+r1]
         
-    if A.x != B.x and A.y != B.y:
+    if A[0] != B[0] and A[1] != B[1]:
         
         # Midpoint to position the curve
         mdpt = midpt(A,B)
         # Angle between the points and the angle perpendicular to it
-        ang1 = np.arctan2((A.y-B.y),(A.x-B.x))
+        ang1 = np.arctan2((A[1]-B[1]),(A[0]-B[0]))
         ang2 = ang1+np.pi/2
         
         # Shift along the connecting line
@@ -284,8 +244,8 @@ def bezierCurveCubic(A,B,r1=1,r2=1,color="black",lw=2,z=0):
         # Shift perpendicular to it
         r = [r1*np.cos(ang2)+mdpt[0],r1*np.sin(ang2)+mdpt[1]]
         
-        R1 = Node([r[0]+sh[0],r[1]+sh[1]])
-        R2 = Node([r[0]-sh[0],r[1]-sh[1]])
+        R1 = [r[0]+sh[0],r[1]+sh[1]]
+        R2 = [r[0]-sh[0],r[1]-sh[1]]
         
     P0 = perpt(A,R1,t)
     P1 = perpt(R1,R2,t)
@@ -305,7 +265,7 @@ def arc(xy,r,th=[0,np.pi],n=100):
     y = np.sin(np.linspace(th[0],th[1],n+1))*r+xy[1]
     x = x[:n]
     y = y[:n]
-    return [(a,b) for (a,b) in zip(x,y)]
+    return [[a,b] for a,b in zip(x,y)]
 
 # List of x positions and list of y positions
 def arcXY(xy,r,th=[0,np.pi],n=100):
@@ -315,6 +275,86 @@ def arcXY(xy,r,th=[0,np.pi],n=100):
     y = y[:n]
     return [x,y]
 
+###############################################################################
+###############################################################################
+##
+## DISTANCE AND POSITIONING FUNCTIONS
+##
+###############################################################################
+###############################################################################
+    
+# Euclidean distance between nodes or points
+def dist(A,B):
+    p1 = (A[0]-B[0])**2
+    p2 = (A[1]-B[1])**2
+    return np.sqrt(p1+p2)
+
+
+# Find midpoints between nodes in two dimensions
+def midpt(A,B):
+    x = (A[0] + B[0])/2
+    y = (A[1] + B[1])/2
+    return [x,y]
+
+# Just the x or y coordinate if that's easier
+def midX(A,B):
+    return (A[0] + B[0])/2
+
+def midY(A,B):
+    return (A[1] + B[1])/2
+
+# Find the point that is some percentage of the way between A and B
+# 0 is at the center of A, 1 is at the center of B
+def perpt(A,B,p):
+    x = (A[0])*(1-p) + (B[0])*(p)
+    y = (A[1])*(1-p) + (B[1])*(p)
+    return [x,y]
+
+# Find the point that is some distance from B along the line between A and B
+def distpt(A,B,d):
+    dd = dist(A,B)
+    if dd == 0:
+        return A
+    p = (dd-d)/(dd)
+    return perpt(A,B,p)
+
+###############################################################################
+###############################################################################
+##
+## GRAPH REPRESENTATION
+##
+###############################################################################
+###############################################################################
+
+# Creates a dictionary of out-edges based on either a graph or a matrix
+def edgeDict(G):
+    
+    edges = dict()
+    if type(G) == Graph:
+        N = G.size
+        for i in range(N):
+            edges[str(i)] = []
+            for j in range(N):
+                if G.Mat[i,j] != 0:
+                    edges[str(i)] += [j]
+        return edges
+    elif issqmat(G):
+        N = np.shape(G)[0]
+        for i in range(N):
+            edges[str(i)] = []
+            for j in range(N):
+                if G[i,j] != 0:
+                    edges[str(i)] += [j]
+        return edges
+    else:
+        raise ValueError("Input must be Graph object or ndarray")
+        
+# Convert a dictionary of edges into an adjacency matrix
+def MatFromDict(D):
+    R = np.zeros([len(D),len(D)])
+    for key, value in D.items():
+        R[int(key),value] = 1
+    return R
 
 ###############################################################################
 ###############################################################################
@@ -396,7 +436,7 @@ def genregmat(N=5,d=2):
 def connectedGraph(N,directed=True):
     while True:
         t = randAjdMat(N,directed=directed)
-        if len(bfs(t,0)) == N:
+        if len(connected(t,0)) == N:
             return t
         
 
@@ -468,9 +508,29 @@ def subgraph(R,L):
         return t
 
 
-# Explore the adjacency matrix staring at vertex x using a breadth first search
-# and return all the a list of all reachable vertices
-def bfs(R,x):
+# Explore the adjacency matrix in a depth first search
+def dfs(R,x):
+    checked = []
+    working = [x]
+    d = edgeDict(R)
+    depth = [np.NaN]*len(d)
+    while len(working) > 0:
+        cur = working[-1]
+        new = False
+        for i in d[str(cur)]:
+            if i not in checked and i not in working:
+                working.append(i)
+                new = True
+                break
+        if new == False:
+            checked.append(working.pop())
+            depth[cur] = len(working)
+
+    return depth
+
+
+# Use a breadth first search to find everything connected to vertex x.
+def connected(R,x):
     checked = set()
     working = [x]
     d = edgeDict(R)
@@ -486,19 +546,23 @@ def bfs(R,x):
 # check the next one. If it isn't then explore the graph from that vertex and
 # return the verticies of the connected component it is a part of.
 def connectedComponents(R):
+    
     n = np.shape(R)[0]
     out, L = [],[]
     ctr = 0
-    while len(L) != n:
+    while ctr < n:
         if ctr in L:
             ctr += 1
             continue
         else:
-            T = bfs(R,ctr)
+            T = connected(R,ctr)
             out.append(T)
             L += T
+            ctr += 1
     return out
 
+
+# Degree of each vertex, IN PROGRESS
 def degreeUndir(G):
     R = undirected(G)
     N = np.shape(R)[0]
@@ -530,111 +594,6 @@ def indegree(R):
     return deg
                 
 
-###############################################################################
-###############################################################################
-##
-## GRAPH REPRESENTATION
-##
-###############################################################################
-###############################################################################
-
-# Creates a dictionary of out-edges based on either a graph or a matrix
-def edgeDict(G):
-    
-    edges = dict()
-    if type(G) == Graph:
-        N = len(G.Nodes)
-        for i in range(N):
-            edges[str(i)] = []
-            for j in range(N):
-                if G.Mat[i,j] != 0:
-                    edges[str(i)] += [j]
-        return edges
-    elif issqmat(G):
-        N = np.shape(G)[0]
-        for i in range(N):
-            edges[str(i)] = []
-            for j in range(N):
-                if G[i,j] != 0:
-                    edges[str(i)] += [j]
-        return edges
-    else:
-        raise ValueError("Input must be Graph object or ndarray")
-        
-# Convert a dictionary of edges into an adjacency matrix
-def MatFromDict(D):
-    R = np.zeros([len(D),len(D)])
-    for key, value in D.items():
-        R[int(key),value] = 1
-    return R
-
-###############################################################################
-###############################################################################
-##
-## DISTANCE AND POSITIONING FUNCTIONS
-##
-###############################################################################
-###############################################################################
-    
-# Euclidean distance between nodes or points
-def dist(A,B):
-    if type(A) == Node and type(B) == Node:
-        p1 = (A.x-B.x)**2
-        p2 = (A.y-B.y)**2
-        return np.sqrt(p1+p2)
-    else:
-        p1 = (A[0]-B[0])**2
-        p2 = (A[1]-B[1])**2
-        return np.sqrt(p1+p2)
-
-
-# Find midpoints between nodes in two dimensions
-def midpt(A,B):
-    if type(A) == Node and type(B) == Node:
-        x = (A.x + B.x)/2
-        y = (A.y + B.y)/2
-        return [x,y]
-    else:
-        x = (A[0] + B[0])/2
-        y = (A[1] + B[1])/2
-        return [x,y]
-
-# Just the x or y coordinate if that's easier
-def midX(A,B):
-    if type(A) == Node and type(B) == Node:
-        return (A.x + B.x)/2
-    else:
-        return (A[0] + B[0])/2
-
-def midY(A,B):
-    if type(A) == Node and type(B) == Node:
-        return (A.y + B.y)/2
-    else:
-        return (A[1] + B[1])/2
-
-# Find the point that is some percentage of the way between A and B
-# 0 is at the center of A, 1 is at the center of B
-def perpt(A,B,p):
-    if type(A) == Node and type(B) == Node:
-        x = (A.x)*(1-p) + (B.x)*(p)
-        y = (A.y)*(1-p) + (B.y)*(p)
-        return [x,y]
-    else:
-        x = (A[0])*(1-p) + (B[0])*(p)
-        y = (A[1])*(1-p) + (B[1])*(p)
-        return [x,y]
-
-# Find the point that is some distance from B along the line between A and B
-def distpt(A,B,d):
-    dd = dist(A,B)
-    if dd == 0:
-        if type(A) == Node and type(B) == Node:
-            return A.xy
-        else:
-            return A
-    p = (dd-d)/(dd)
-    return perpt(A,B,p)
-
 
 ###############################################################################
 ###############################################################################
@@ -657,7 +616,7 @@ def issqmat(M):
             raise ValueError("Adjacency matrix must be square")
         return True
     raise ValueError("Must be an ndarry object")
-
+    
 ###############################################################################
 ###############################################################################
 ##
@@ -672,19 +631,20 @@ def connectogram(R,L=[None],title="",size=[7,7],nodeSize=.3,
     
     fig, ax = makeCanvas(size=size)
     
-    n = R.shape[0]
+    n = np.shape(R)[0]
     if len(L) != n:
         L = [str(i) for i in range(n)]
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=nodeSize,tscaledef=15,coldef = nodeCol)
+    G = Graph(rdef=nodeSize,tscaledef=1.5,coldef = nodeCol)
     
-    for i,pos in enumerate(xy):
-        G.addNode(pos,text=str([L[i]][0]),z=2)
+    for i,p in enumerate(xy):
+        G.addNode(p,text=str([L[i]][0]),z=2)
 
     G.Mat = R
     G.drawNodes(fig,ax)
-    G.drawArrows(term=G.rdef*1.1,col=lineCol,wd=lineSize)
+    G.drawArrows(col=lineCol,wd=lineSize)
+    G.drawText(fig,ax)
     plt.title(title)
     return G, fig, ax
 
@@ -695,7 +655,7 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
     
     fig, ax = makeCanvas(size=size)
     
-    n = R.shape[0]
+    n = np.shape(R)[0]
     if len(L) != n:
         L = [str(i) for i in range(n)]
 
@@ -706,29 +666,28 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
                 R[y,x] = 0
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=nodeSize,tscaledef=15,coldef = nodeCol)
+    G = Graph(rdef=nodeSize,tscaledef=1.5,coldef = nodeCol)
     
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str([L[i]][0]),z=2)
 
     G.Mat = R
     G.drawNodes(fig,ax)
+    G.drawText(fig,ax)
     if curve == 0:
         G.drawLines(col=lineCol)
     if curve != 0:
         for i in np.argwhere(R != 0):
-            #print(i,abs(i[0] - i[1]))
             if i[0] == i[1]:
                 continue
             if abs(i[0] - i[1]) >= (n//2):
-                bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=-curve,color=lineCol)
+                bezierCurve(G.pos[i[0]],G.pos[i[1]],r=-curve,color=lineCol)
             else:
-                bezierCurve(G.Nodes[i[0]],G.Nodes[i[1]],r=curve,color=lineCol)
+                bezierCurve(G.pos[i[0]],G.pos[i[1]],r=curve,color=lineCol)
     plt.title(title)
-    makeUndir(G)
+
     return G, fig, ax
-    
-    
+
 ###############################################################################
 ###############################################################################
 ##
@@ -753,41 +712,36 @@ def test():
     G.addEdges([0,1],[1,2])
     
     # Change an existing node
-    G.Nodes[0].update(col='red')
+    G.colors[0] = 'red'
     
     print(G.Mat)
     print(type(G.Mat))
     
-    # Use the quickdraw function
-    
     fig, ax = makeCanvas()
     G.QuickDraw(fig,ax)
+    G.drawText(fig,ax)
     
-    # Use the simplified bezier curve function
-    bezierCurve(G.Nodes[0],G.Nodes[1],2)
     
-    # Use the simplified cubie bezier curve function
-    bezierCurveCubic(G.Nodes[0],G.Nodes[2],-2,4)
+    # Use the simplified cubie bezier curve functions
+    bezierCurve(G.pos[0],G.pos[1],2)
+    bezierCurveCubic(G.pos[0],G.pos[2],-2,4)
     
     # Connecting arrow between points
     connectArr([0,0],[1.1,2])
     
     #Connecting arrow between nodes
-    connectArr(G.Nodes[0],G.Nodes[2])
+    connectArr(G.pos[0],G.pos[1],headpos=.5)
+    loop(G.pos[0],th=.1,rot=.5)
     
-    #Make a loop
-    loop(G.Nodes[0],th=.1,rot=.5)
-    
-    ## Add some other stuff
     angles = np.arange(0, 360 + 45, 45)
     ells = [patches.Ellipse((1, 1), 4, 2, a,zorder=0) for a in angles]
     for e in ells:
         e.set_alpha(0.1)
         ax.add_patch(e)
     
-    # Make another plot
     fig2, ax2 = makeCanvas(size=[3,3])
     G.QuickDraw(fig2,ax2)
+    G.drawText(fig2,ax2)
     
     fig3, ax3 = makeCanvas(size=[5,5])
     
@@ -799,13 +753,7 @@ def test():
     G1.addEdgesBi([2,2,2,1],[0,1,3,1])
     
     G1.QuickDraw(fig3,ax3)
-    loop(G1.Nodes[1],r=.3,th=1.2,rot=.5)
+    loop(G1.pos[1],r=.3,th=1.2,rot=.5)
     
-    
-    print(outdegree(G1.Mat))
-    print(indegree(G1.Mat))
-    print(degreeUndir(G1.Mat))
-    
-    
-    
+
 #test()
