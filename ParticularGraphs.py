@@ -3,7 +3,7 @@ import numpy as np
 
 def petersonGraph():
 
-    G = Graph(rdef=.2)
+    G = Graph(NodeSize=.2)
     
     ctr = 0
     for i in arc([0,0],th=[np.pi/10,np.pi*2+(np.pi/10)],r=2,n=5):
@@ -24,7 +24,7 @@ def petersonGraph():
 
 def bullGraph():
     
-    G = Graph(rdef=.2)
+    G = Graph(NodeSize=.2)
     
     ps = [[0,-1],[-.7,0],[.7,0],[-2,.5],[2,.5]]
     
@@ -37,7 +37,7 @@ def bullGraph():
 
 def bowtieGraph():
     
-    G = Graph(rdef=.2)
+    G = Graph(NodeSize=.2)
     
     ps = [[0,0],[-1,.5],[-1,-.5],[1,.5],[1,-.5]]
     
@@ -50,7 +50,7 @@ def bowtieGraph():
 
 def flowerSnarkGraph():
     
-    G = Graph(rdef=.2)
+    G = Graph(NodeSize=.2)
     
     ctr = 0
     for i in arc([0,0],th=[np.pi/10,np.pi*2+(np.pi/10)],r=.7,n=5):
@@ -71,7 +71,7 @@ def flowerSnarkGraph():
     return G
 
 def hypercubeGraph():
-    G = Graph(rdef=.2)
+    G = Graph(NodeSize=.2)
     ctr = 0
     for i in arc([0,0],th=[0,np.pi*2],r=1.2,n=8):
         G.addNode(i,text=str(ctr))
@@ -126,14 +126,25 @@ def completeBipartiteGraph(P,Q):
 ###############################################################################
 
 def testfunc():
-    fig1, ax1 = makeCanvas()
     #G = bullGraph()
     #G = petersonGraph()
     #G = bowtieGraph()
     #G = flowerSnarkGraph()
     #G = completeGraph(8)
     #G = completeBipartiteGraph(3,4)
-    G = hypercubeGraph()
+    
+    
+    G = petersonGraph()
+    for i in G.radii:
+        i = .1
+    print(G.radii)
+    fig1, ax1 = makeCanvas()
     G.QuickDraw(fig1,ax1)
+    plt.title("Original Graph")
+    
+    fig2, ax2 = makeCanvas()
+    G.Mat = complement(G.Mat)
+    G.QuickDraw(fig2,ax2)
+    plt.title("Complementary Graph")
 
 #testfunc()

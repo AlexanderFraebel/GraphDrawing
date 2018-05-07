@@ -70,36 +70,3 @@ def dijkstra(M,s=0):
         pathlist.append(path)
 
     return d,pathlist
-
-###############################################################################
-##
-## Create an example
-##
-###############################################################################
-
-def DijkstraExample():
-    X = connectedGraph(11)
-    #print(X)
-    N = 0
-    di = dijkstra(X,N)
-    G,fig,ax = connectogram(X,[i for i in range(8)],
-                       title="Shortest Paths from Node {}".format(N),
-                       nodeSize=.2,lineSize=1)
-    #print(di[0])
-    for pos,val in enumerate(di[1]):
-        s = ""
-        if len(val) == 0:
-            print("{}: Not Connected".format(pos))
-            continue
-        for i in val:
-            s += str(i) + " \u2192 "
-        print("{}: {}".format(pos,s[:-2]))
-        
-    for i in di[1]:
-        if len(i) == 1:
-            continue
-        for j in range(len(i)-1):
-            connectArr(G.pos[i[j]],G.pos[i[j+1]],headpos=.2,col='red',z=1,width=2)
-
-
-DijkstraExample()

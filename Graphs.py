@@ -4,14 +4,14 @@ import random
 import matplotlib.patches as patches
 
 class Graph:
-    def __init__(self,rdef=.3,tscaledef=1,coldef=(.53, .81, .94)):
+    def __init__(self,NodeSize=.3,TextSize=1,NodeColor=(.53, .81, .94)):
         
         # Set a few default characteristics
-        self.rdef = rdef
-        self.tscaledef = tscaledef
-        self.coldef = coldef
+        self.NodeSize = NodeSize
+        self.TextSize = TextSize
+        self.NodeColor = NodeColor
         
-        # Prepare a list of nodes
+        # For quick reference of how many nodes are in the Graph
         self.size = 0
         
         # Need an easier system to control than each node being an independent
@@ -29,11 +29,11 @@ class Graph:
     ## Create new node
     def addNode(self,xy=[0,0],r=None,col=[None],text="",tscale=None,z=1):
         if r == None:
-            r = self.rdef
+            r = self.NodeSize
         if tscale == None:
-            tscale = self.tscaledef
+            tscale = self.TextSize
         if any(i == None for i in col):
-            col = self.coldef
+            col = self.NodeColor
             
         self.radii.append(r)
         self.colors.append(col)
@@ -49,14 +49,13 @@ class Graph:
         t[:-1,:-1] = self.Mat
         self.Mat = t
         
-    ## Create edges. By default just sets them equal to 1.
+    ## Create directed edges. By default just sets them equal to 1.
     def addEdges(self,A,B,D=[None]):
         if any(i == None for i in D):
             D = [1]*len(A)
         self.Mat[A,B] = D
     
-    # Bidirectional edges. Often doesn't matter when drawing but I figured it 
-    # would be annoying if this wasn't in here somewhere.
+    # Bidirectional edges.
     def addEdgesBi(self,A,B,D=[None]):
         if any(i == None for i in D):
             D = [1]*len(A)
@@ -71,6 +70,7 @@ class Graph:
         del self.texts[n]
         del self.tscales[n]
         del self.zpos[n]
+        self.size -= 1
         self.Mat = np.delete(self.Mat,n,0)
         self.Mat = np.delete(self.Mat,n,1)
     
@@ -82,18 +82,20 @@ class Graph:
         self.Mat[B,A] = 0
 
     # Simple drawing functions for common situations
-    def QuickDraw(self,fig,ax):
-        self.drawNodes(fig,ax)
+    def QuickDraw(self):
+        self.drawNodes()
         self.drawLines()
         
-    def drawNodes(self,fig,ax):
+    def drawNodes(self):
+        ax = plt.gca()
         for i in range(self.size):
             circ = plt.Circle(self.pos[i],radius = self.radii[i], 
                               fc = self.colors[i],zorder=self.zpos[i])
             ax.add_patch(circ)
 
     
-    def drawText(self,fig,ax):
+    def drawText(self):
+        fig = plt.gcf()
         s = fig.get_size_inches()
         d = np.sqrt(s[0]**2+s[1]**2)*5
         for i in range(self.size):
@@ -289,7 +291,6 @@ def dist(A,B):
     p2 = (A[1]-B[1])**2
     return np.sqrt(p1+p2)
 
-
 # Find midpoints between nodes in two dimensions
 def midpt(A,B):
     x = (A[0] + B[0])/2
@@ -317,6 +318,17 @@ def distpt(A,B,d):
         return A
     p = (dd-d)/(dd)
     return perpt(A,B,p)
+
+# Create a 
+def DistanceMatrix(G):
+    if type(G) == Graph:
+        N = G.size
+        for i in range(N):
+            for j in range(N):
+                if G.Mat[i,j] != 0:
+                    G.Mat[i,j] = dist(G.pos[i],G.pos[j])
+    return G
+
 
 ###############################################################################
 ###############################################################################
@@ -363,6 +375,21 @@ def MatFromDict(D):
 ##
 ###############################################################################
 ###############################################################################
+
+## The complementary graph
+def complement(G):
+    if issqmat(G):
+        X = G.copy()
+        N = np.shape(X)[0]
+        for i in range(N):
+            for j in range(N):
+                if X[i,j] == 0:
+                    X[i,j] = 1
+                else:
+                    X[i,j] = 0
+                
+    return X
+
 
 # A randomized adjacency matrix
 def randAjdMat(N=5,directed=True,prob=.2):
@@ -625,9 +652,12 @@ def issqmat(M):
 ###############################################################################
 ###############################################################################
 
-# Arranges the elements of the graph in a circle and draws arrows between them
-def connectogram(R,L=[None],title="",size=[7,7],nodeSize=.3,
-                      nodeCol = (.53, .81, .94), lineSize  = 2, lineCol = "black"):
+# Arranges the elements of the graph in a circle and draws connections between
+# then with options to use arrows (directed) or lines (undirected) and to add
+# a curve
+def connectogram(R, L=[None], directed = False, curve = 0, title="" ,size=[7,7], 
+                 nodeSize=.3, nodeCol = (.53, .81, .94), lineSize  = 2, 
+                 lineCol = "black"):
     
     fig, ax = makeCanvas(size=size)
     
@@ -636,57 +666,69 @@ def connectogram(R,L=[None],title="",size=[7,7],nodeSize=.3,
         L = [str(i) for i in range(n)]
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=nodeSize,tscaledef=1.5,coldef = nodeCol)
+    G = Graph(NodeSize=nodeSize,TextSize=1.5,NodeColor = nodeCol)
     
     for i,p in enumerate(xy):
         G.addNode(p,text=str([L[i]][0]),z=2)
 
+    if directed == False:
+        R = undirected(R)
     G.Mat = R
-    G.drawNodes(fig,ax)
-    G.drawArrows(col=lineCol,wd=lineSize)
-    G.drawText(fig,ax)
-    plt.title(title)
-    return G, fig, ax
+    G.drawNodes()
+    
+    if directed == True:
+        G.drawArrows(col=lineCol,wd=lineSize)
+    else:
+        
+        if curve == 0:
+            G.drawLines(col=lineCol)
+        if curve != 0:
+            for i in range(G.size):
+                for j in range(i):
+                    if G.Mat[i,j] != 0 and i != j:
+                        if abs(i - j) >= (n//2):
+                            bezierCurve(G.pos[i],G.pos[j],r=-curve,color=lineCol)
+                        else:
+                            bezierCurve(G.pos[i],G.pos[j],r=curve,color=lineCol)
 
-# Arranges the elements of the graph in a circle and draws lines between them
-# Option to curve the connections
-def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
+                
+                    
+
+    G.drawText()
+    plt.title(title)
+    return G
+
+## Create arc diagrams
+def arcDiagram(R,L=[None],title="",size=[7,7],nodeSize=.25,
                       nodeCol = (.53, .81, .94), lineSize  = 2, lineCol = "black"):
     
-    fig, ax = makeCanvas(size=size)
+    fig, ax = makeCanvas(xlim=[-3,3],ylim=[-3,3],size=size)
     
-    n = np.shape(R)[0]
+    n = R.shape[0]
     if len(L) != n:
         L = [str(i) for i in range(n)]
 
-    for x in range(n):
-        for y in range(n):
-            if R[y,x] != 0:
-                R[x,y] = R[y,x]
-                R[y,x] = 0
-
-    xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(rdef=nodeSize,tscaledef=1.5,coldef = nodeCol)
+    G = Graph(NodeSize=nodeSize,TextSize=1.5,NodeColor = nodeCol)
     
-    for i,pos in enumerate(xy):
-        G.addNode(pos,text=str([L[i]][0]),z=2)
-
-    G.Mat = R
-    G.drawNodes(fig,ax)
-    G.drawText(fig,ax)
-    if curve == 0:
-        G.drawLines(col=lineCol)
-    if curve != 0:
-        for i in np.argwhere(R != 0):
-            if i[0] == i[1]:
-                continue
-            if abs(i[0] - i[1]) >= (n//2):
-                bezierCurve(G.pos[i[0]],G.pos[i[1]],r=-curve,color=lineCol)
-            else:
-                bezierCurve(G.pos[i[0]],G.pos[i[1]],r=curve,color=lineCol)
-    plt.title(title)
-
-    return G, fig, ax
+    pos = np.linspace(-2.5,2.5,n)
+    
+    for p,t in zip(pos,L):
+        G.addNode([p,0],text=t)
+    
+    #print(R)
+    for i in np.argwhere(R != 0):
+        A,B = i[0],i[1]
+        if A == B:
+            continue
+        #print(A,B)
+        d = abs(pos[A]-pos[B])/2
+        m = (pos[A]+pos[B])/2
+        a = arcXY([m,nodeSize/3],r=d)
+        plt.plot(a[0],a[1],color=lineCol,zorder=0,lw=lineSize)
+        
+    G.drawNodes()
+    G.drawText()
+    return G
 
 ###############################################################################
 ###############################################################################
@@ -698,7 +740,7 @@ def connectogramUndir(R,L=[None],title="",size=[7,7],curve=0,nodeSize=.3,
 def test():
 
     # Make a graph
-    G = Graph(rdef=.5)
+    G = Graph(NodeSize=.5)
 
     # Add a node with all default properties
     G.addNode()
@@ -718,8 +760,8 @@ def test():
     print(type(G.Mat))
     
     fig, ax = makeCanvas()
-    G.QuickDraw(fig,ax)
-    G.drawText(fig,ax)
+    G.QuickDraw()
+    G.drawText()
     
     
     # Use the simplified cubie bezier curve functions
@@ -740,20 +782,21 @@ def test():
         ax.add_patch(e)
     
     fig2, ax2 = makeCanvas(size=[3,3])
-    G.QuickDraw(fig2,ax2)
-    G.drawText(fig2,ax2)
+    G.QuickDraw()
+    G.drawText()
     
     fig3, ax3 = makeCanvas(size=[5,5])
     
-    G1 = Graph(rdef=.3)
+    G1 = Graph(NodeSize=.3)
     ps = [[0,0],[0,1],[2,0],[1,-1]]
     for i in range(len(ps)):
         G1.addNode(ps[i],text=str(i))
     
     G1.addEdgesBi([2,2,2,1],[0,1,3,1])
     
-    G1.QuickDraw(fig3,ax3)
+    G1.QuickDraw()
     loop(G1.pos[1],r=.3,th=1.2,rot=.5)
     
+    complement(G.Mat)
 
 #test()
