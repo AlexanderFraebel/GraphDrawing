@@ -1,4 +1,4 @@
-import Graphs
+from Graphs import *
 from RandomPoints import randomNodes
 import random
 
@@ -55,13 +55,13 @@ def convexHull(G,directed=False):
 
     return O
 
-makeCanvas()
+makeCanvas(size=[12,12])
 
 #np.random.seed(17)
-G = randomNodes(15,.3)
+G = randomNodes(20,.3)
 G.texts = [i for i in range(20)]
 G.tscales = [2]*20
-G.radii = [.15]*20
+G.radii = [.1]*20
 G.drawNodes()
 G.drawText()
 

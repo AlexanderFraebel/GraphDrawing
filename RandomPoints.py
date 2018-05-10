@@ -9,8 +9,9 @@ def isclose(P,L,d):
     return False
 
 
-def randomNodes(N,d, xlim = [-2.8,1.8], ylim = [-2.8,2.8]):
-
+def randomNodes(N,d, xlim = [-2.8,2.8], ylim = [-2.8,2.8],seed=None):
+    if seed != None:
+        np.random.seed(seed)
     G = Graph(NodeSize=.1)
     
     for i in range(N):

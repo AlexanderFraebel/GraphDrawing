@@ -9,6 +9,7 @@ def DijkstraVisualizer(G,N=0):
     
     G.colors[N] ='orange'
     
+    print("\nPaths from Node {}".format(N))
     for pos,val in enumerate(paths):
         s = ""
         if len(val) == 0:

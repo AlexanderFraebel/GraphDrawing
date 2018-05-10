@@ -34,6 +34,8 @@ class Graph:
             tscale = self.TextSize
         if any(i == None for i in col):
             col = self.NodeColor
+        if text == "":
+            text = str(self.size)
             
         self.radii.append(r)
         self.colors.append(col)
@@ -390,81 +392,15 @@ def complement(G):
                 
     return X
 
+# Turn a Graph into a complete graph
+def complete(G):
+    if type(G) == Graph:
+        G.Mat = np.ones([G.size,G.size])
 
-# A randomized adjacency matrix
-def randAjdMat(N=5,directed=True,prob=.2):
-    R = np.zeros([N,N],dtype="int")
-    
-    if directed == True:
-        for x in range(N):
-            for y in range(N):
-                R[x,y] = np.random.choice([0,1],p=[1-prob,prob])
-    if directed == False:
-        for x in range(N):
-            for y in range(x):
-                r = np.random.choice([0,1],p=[1-prob,prob])
-                R[x,y],R[y,x] = r
-                
-    return R
-
-
-# Create a graph where every vertex has the same number of neighbors
-def regularGraph(N=5,d=2,lim=100):
-    ## Can't connect to more verticies than exist
-    if d > (N-1):
-        raise ValueError("Degree of a regular graph must be less than its size.")
-    ## The number of vertices of odd degree must be even
-    if N % 2 == 1 and d % 2 == 1:
-        raise ValueError("No such graph due to handshaking lemma.")
-    ctr = 0
-    cr = False
-    while cr == False:
-        ctr += 1
-        if ctr > lim:
-            # Prevent function from running too long if accidentally given a 
-            # excessive input
-            raise ValueError("Unable to find matching graph.")
-        cr = True
-        # Create a possibly regular graph. Retry if it isn't regular.
-        R = genregmat(N,d)
-        for i in R.values():
-            if len(i) != d:
-                cr = False
-                break
-    #print(ctr)
-    return MatFromDict(R)
-
-# Method for generating an adjacency matrix that is fairly likely to be 
-# regular. Simply picks random connections and fills in a dictionary with them.
-def genregmat(N=5,d=2):
-    S = [i for i in range(0,N)]
-    D = {}
-    for i in range(N):
-        D[str(i)] = []
-    for i in range(N):
-        if len(S) == 0:
-            break
-        l = len(D[str(i)])
-        if l < d:
-
-            S = [x for x in S if x != i]
-            n = min(d-l,len(S))
-            r = random.sample(S,n)
-            for v in r:
-                D[str(i)].append(v)
-                if i not in D[str(v)]:
-                    D[str(v)].append(i)
-            for pos, val in enumerate(S):
-                if len(D[str(val)]) == d:
-                    del S[pos]
-
-    return D
-
-def connectedGraph(N,directed=True):
-    while True:
-        t = randAjdMat(N,directed=directed)
-        if len(connected(t,0)) == N:
-            return t
+# Remove all edges from a Graph
+def empty(G):
+    if type(G) == Graph:
+        G.Mat = np.zeros([G.size,G.size])
         
 
 # Make a copy of an adjacency matrix modified so that every edge is bidirectional
@@ -535,8 +471,9 @@ def subgraph(R,L):
         return t
 
 
-# Explore the adjacency matrix in a depth first search
-def dfs(R,x):
+# Return the depth of each node using a depth first search
+# The search considers the "next" node to be the one with the lowest index
+def dfsDepth(R,x):
     checked = []
     working = [x]
     d = edgeDict(R)
@@ -555,6 +492,24 @@ def dfs(R,x):
 
     return depth
 
+# Return the depth of each node using a breadth first search
+def bfsDepth(R,x):
+    checked = []
+    working = [x]
+    d = edgeDict(R)
+    depth = [np.NaN]*len(d)
+    while len(working) > 0:
+        cur = working[0]
+        new = False
+        for i in d[str(cur)]:
+            if i not in checked and i not in working:
+                working.append(i)
+                new = True
+        if new == False:
+            checked.append(working.pop())
+            depth[cur] = len(working)
+
+    return depth
 
 # Use a breadth first search to find everything connected to vertex x.
 def connected(R,x):
@@ -569,9 +524,8 @@ def connected(R,x):
         checked.add(cur)
     return sorted(list(checked))
 
-# For each element check if it is part of a known connected component. If it is
-# check the next one. If it isn't then explore the graph from that vertex and
-# return the verticies of the connected component it is a part of.
+# Return a list where each element is a list containing the indexes of the 
+# connected components of the graph.
 def connectedComponents(R):
     
     n = np.shape(R)[0]
@@ -589,7 +543,7 @@ def connectedComponents(R):
     return out
 
 
-# Degree of each vertex, IN PROGRESS
+# How many edges start or terminate at each node, NEED TO MAKE SURE THIS IS CORRECT
 def degreeUndir(G):
     R = undirected(G)
     N = np.shape(R)[0]
@@ -600,7 +554,8 @@ def degreeUndir(G):
                 deg[i] += 1
                 deg[j] += 1
     return deg
-    
+
+# How many edges start at each node
 def outdegree(R):
     N = np.shape(R)[0]
     deg = [0]*N
@@ -611,6 +566,7 @@ def outdegree(R):
 
     return deg
 
+# How many edges terminate at each node
 def indegree(R):
     N = np.shape(R)[0]
     deg = [0]*N
@@ -643,7 +599,90 @@ def issqmat(M):
             raise ValueError("Adjacency matrix must be square")
         return True
     raise ValueError("Must be an ndarry object")
+
+###############################################################################
+###############################################################################
+##
+## CREATE COMMON ADJACENCY MATRICES
+##
+###############################################################################
+###############################################################################
     
+# A randomized adjacency matrix
+def randAjdMat(N=5,directed=True,prob=.2):
+    R = np.zeros([N,N],dtype="int")
+    
+    if directed == True:
+        for x in range(N):
+            for y in range(N):
+                R[x,y] = np.random.choice([0,1],p=[1-prob,prob])
+    if directed == False:
+        for x in range(N):
+            for y in range(x):
+                r = np.random.choice([0,1],p=[1-prob,prob])
+                R[x,y],R[y,x] = r
+                
+    return R
+
+
+# Create a graph where every vertex has the same number of neighbors
+def regularGraph(N=5,d=2,lim=100):
+    ## Can't connect to more verticies than exist
+    if d > (N-1):
+        raise ValueError("Degree of a regular graph must be less than its size.")
+    ## The number of vertices of odd degree must be even
+    if N % 2 == 1 and d % 2 == 1:
+        raise ValueError("No such graph due to handshaking lemma.")
+    ctr = 0
+    cr = False
+    while cr == False:
+        ctr += 1
+        if ctr > lim:
+            # Prevent function from running too long if accidentally given a 
+            # excessive input
+            raise ValueError("Unable to find matching graph.")
+        cr = True
+        # Create a possibly regular graph. Retry if it isn't regular.
+        R = genregmat(N,d)
+        for i in R.values():
+            if len(i) != d:
+                cr = False
+                break
+    #print(ctr)
+    return MatFromDict(R)
+
+# Method for generating an adjacency matrix that is fairly likely to be 
+# regular. Simply picks random connections and fills in a dictionary with them.
+def genregmat(N=5,d=2):
+    S = [i for i in range(0,N)]
+    D = {}
+    for i in range(N):
+        D[str(i)] = []
+    for i in range(N):
+        if len(S) == 0:
+            break
+        l = len(D[str(i)])
+        if l < d:
+
+            S = [x for x in S if x != i]
+            n = min(d-l,len(S))
+            r = random.sample(S,n)
+            for v in r:
+                D[str(i)].append(v)
+                if i not in D[str(v)]:
+                    D[str(v)].append(i)
+            for pos, val in enumerate(S):
+                if len(D[str(val)]) == d:
+                    del S[pos]
+
+    return D
+
+# Create a connected adjacency matrix
+def connectedGraph(N,directed=True):
+    while True:
+        t = randAjdMat(N,directed=directed)
+        if len(connected(t,0)) == N:
+            return t
 ###############################################################################
 ###############################################################################
 ##
