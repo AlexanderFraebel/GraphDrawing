@@ -8,9 +8,9 @@ from Graphs import *
 ###############################################################################
 ###############################################################################
     
-def tetrahedronGraph():
+def tetrahedronGraph(**kwargs):
     
-    G = Graph(rdef=.2)
+    G = Graph(**kwargs)
     
     ps = [[0,-.3],[-1,-1],[1,-1],[0,.7]]
     
@@ -21,9 +21,9 @@ def tetrahedronGraph():
     
     return G
 
-def cubeGraph():
+def cubeGraph(**kwargs):
     
-    G = Graph(rdef=.2)
+    G = Graph(**kwargs)
     
     ps = [[-1,-1],[-1,1],[1,1],[1,-1],[-2,-2],[-2,2],[2,2],[2,-2]]
     
@@ -34,9 +34,9 @@ def cubeGraph():
     
     return G
 
-def octahedronGraph():
+def octahedronGraph(**kwargs):
     
-    G = Graph(rdef=.2)
+    G = Graph(**kwargs)
     
     ps = [[-.6,-.4],[.6,-.4],[0,.7],[-2,1.5],[2,1.5],[0,-2.5]]
     
@@ -47,9 +47,9 @@ def octahedronGraph():
     
     return G
 
-def dodecahedronGraph():
+def dodecahedronGraph(**kwargs):
     
-    G = Graph(rdef=.2)
+    G = Graph(**kwargs)
     
     rt = -np.pi/2
     ctr = 0
@@ -80,9 +80,9 @@ def dodecahedronGraph():
     
     return G
 
-def icosahedronGraph():
+def icosahedronGraph(**kwargs):
     
-    G = Graph(rdef=.2)
+    G = Graph(**kwargs)
     
     rt = -np.pi/2
     ctr = 0
@@ -114,31 +114,33 @@ def icosahedronGraph():
 ###############################################################################
 ###############################################################################
 
-def testfun():
-    fig1 = plt.figure(1)
-    fig1.set_size_inches(10,15)
+def testPlatonicSolids():
+    makeCanvas([0,3],[0,2],[10,15])
     
     ax = plt.subplot(321)
     ax.axis('off')
-    G = tetrahedronGraph()
-    G.QuickDraw(fig1,ax)
+    G = tetrahedronGraph(NodeSize=.1)
+    G.QuickDraw()
     
     ax = plt.subplot(322)
     ax.axis('off')
-    G = cubeGraph()
-    G.QuickDraw(fig1,ax)
+    G = cubeGraph(NodeSize=.2,EdgeWidth=3)
+    G.QuickDraw()
     
     ax = plt.subplot(323)
     ax.axis('off')
-    G = octahedronGraph()
-    G.QuickDraw(fig1,ax)
+    G = octahedronGraph(NodeSize=.2)
+    G.QuickDraw()
     
     ax = plt.subplot(324)
     ax.axis('off')
-    G = dodecahedronGraph()
-    G.QuickDraw(fig1,ax)
+    G = dodecahedronGraph(NodeSize=.2)
+    G.QuickDraw()
     
     ax = plt.subplot(325)
     ax.axis('off')
-    G = icosahedronGraph()
-    G.QuickDraw(fig1,ax)
+    G = icosahedronGraph(NodeSize=.2)
+    G.QuickDraw()
+
+testPlatonicSolids()
+    

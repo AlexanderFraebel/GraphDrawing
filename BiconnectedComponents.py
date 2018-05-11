@@ -101,35 +101,37 @@ def explore(d,x,checked,working,pred,depth,lowpoint,cut,edges,verts):
 
 ###############################################################################
 ###############################################################################
-        
-G = Graph(rdef=.2)
-
-pos = [[-3,2],[-3,1],[-2,1],[-2,0],[-1,-1],
-       [-1,0],[0,1],[0,0],[1,0],[-1,2],[0,2],
-       [0,3],[1,2],[1,-1],[2,1]]
-
-for i,p in enumerate(pos):
-    G.addNode(p,text=i)
-
-
-G.addEdgesBi(
-        [0,0,1,2,3,4,5,6,6,6,9,9,11,10,12,13,14,14],
-        [1,2,3,3,4,5,6,7,8,9,10,11,10,12,8,8,12,8])
-
-
-fig, ax = makeCanvas(xlim=[-4,4],ylim=[-4,4],size=[10,10])
-G.QuickDraw(fig,ax)
-
-
-#d = dfs(G.Mat,5)
-#for i,j in d:
-    #p = G.Nodes[i].xy
-    #plt.text(p[0]+.05,p[1]+.3,str(j),color='red',size="x-large")
-
+def testBiconnectedComponents():
+    G = Graph(NodeSize=.2)
     
-d,l,v = biconnected(G.Mat,5)
-for i in range(15):
-    p = G.pos[i]
-    plt.text(p[0]+.05,p[1]+.3,str(d[i]),color='red',size="x-large")
-    plt.text(p[0]+.05,p[1]+.5,str(l[i]),color='green',size="x-large")
+    pos = [[-3,2],[-3,1],[-2,1],[-2,0],[-1,-1],
+           [-1,0],[0,1],[0,0],[1,0],[-1,2],[0,2],
+           [0,3],[1,2],[1,-1],[2,1]]
+    
+    for i,p in enumerate(pos):
+        G.addNode(p,text=i)
+    
+    
+    G.addEdgesBi(
+            [0,0,1,2,3,4,5,6,6,6,9,9,11,10,12,13,14,14],
+            [1,2,3,3,4,5,6,7,8,9,10,11,10,12,8,8,12,8])
+    
+    
+    makeCanvas(xlim=[-4,4],ylim=[-4,4],size=[10,10])
+    G.QuickDraw()
+    
+    
+    #d = dfs(G.Mat,5)
+    #for i,j in d:
+        #p = G.Nodes[i].xy
+        #plt.text(p[0]+.05,p[1]+.3,str(j),color='red',size="x-large")
+    
+        
+    d,l,v = biconnected(G.Mat,5)
+    for i in range(15):
+        p = G.pos[i]
+        plt.text(p[0]+.05,p[1]+.3,str(d[i]),color='red',size="x-large")
+        plt.text(p[0]+.05,p[1]+.5,str(l[i]),color='green',size="x-large")
+        
+#testBiconnectedComponents()
     

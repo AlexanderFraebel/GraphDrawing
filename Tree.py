@@ -61,7 +61,7 @@ def randomTree(R,x):
 
 
 
-def f():
+def testTree():
     G = flowerSnarkGraph()
     N = 8
     d1 = depthTree(G.Mat,N)
@@ -105,4 +105,4 @@ def f():
         connectArr(G.pos[j],G.pos[i],headpos=.2,headwidth=.1,headlength=.1,col='black',width=3)
     plt.title("Random Search",size=30)
     
-f()
+#testTree()

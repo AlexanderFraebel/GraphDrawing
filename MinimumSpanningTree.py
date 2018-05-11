@@ -79,31 +79,34 @@ def KruskalMinTree(G,modify=True):
 
     return out
 
+
+def testMinimumSpanningTree():
+    N = 300
+    makeCanvas(size=[7,7])
+    G = randomNodes(N,.1,NodeColor='black',NodeSize=.1,seed=45345)
+    complete(G)
+    G.radii = [.03]*N
     
-N = 300
-makeCanvas(size=[8,8])
-G = randomNodes(N,.1,seed=45345)
-complete(G)
-G.radii = [.03]*N
-
-t0 = time()
-Krus = KruskalMinTree(G)
-print("Kruskal: {:.3f} seconds".format(time()-t0))
-
-G.drawNodes()
-G.drawLines()
-
-
-
-N = 300
-makeCanvas(size=[8,8])
-G = randomNodes(N,.1,seed=45345)
-complete(G)
-G.radii = [.03]*N
-
-t0 = time()
-Prim = PrimMinTree(G)
-print("Prim:    {:.3f} seconds".format(time()-t0))
-
-G.drawNodes()
-G.drawLines()
+    t0 = time()
+    Krus = KruskalMinTree(G)
+    print("Kruskal: {:.3f} seconds".format(time()-t0))
+    
+    G.drawNodes()
+    G.drawLines()
+    
+    
+    
+    N = 300
+    makeCanvas(size=[7,7])
+    G = randomNodes(N,.1,NodeColor='black',NodeSize=.1,seed=45345)
+    complete(G)
+    G.radii = [.03]*N
+    
+    t0 = time()
+    Prim = PrimMinTree(G)
+    print("Prim:    {:.3f} seconds".format(time()-t0))
+    
+    G.drawNodes()
+    G.drawLines()
+    
+testMinimumSpanningTree()

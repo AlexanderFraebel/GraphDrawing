@@ -2,8 +2,8 @@ from Graphs import *
 
 def EulersBridges():
     # There are four landmasses and seven bridges with the following layout
-    fig, ax = makeCanvas()
-    G = Graph(rdef=.3)
+    makeCanvas()
+    G = Graph(NodeSize=.3)
     
     G.addNode([-2,0])
     G.addNode([2,0])
@@ -17,6 +17,6 @@ def EulersBridges():
     bezierCurve(G.pos[0],G.pos[2],-1)
     bezierCurve(G.pos[0],G.pos[3],1)
     bezierCurve(G.pos[0],G.pos[3],-1)
-    G.QuickDraw(fig,ax)
+    G.QuickDraw()
 
 EulersBridges()

@@ -4,12 +4,15 @@ import random
 import matplotlib.patches as patches
 
 class Graph:
-    def __init__(self,NodeSize=.3,TextSize=1,NodeColor=(.53, .81, .94)):
+    def __init__(self,NodeSize=.3,TextSize=1,NodeColor=(.53, .81, .94),
+                 EdgeColor=(0.0, 0.0, 0.0), EdgeWidth=2):
         
         # Set a few default characteristics
         self.NodeSize = NodeSize
         self.TextSize = TextSize
         self.NodeColor = NodeColor
+        self.EdgeColor = EdgeColor
+        self.EdgeWidth = EdgeWidth
         
         # For quick reference of how many nodes are in the Graph
         self.size = 0
@@ -51,18 +54,15 @@ class Graph:
         t[:-1,:-1] = self.Mat
         self.Mat = t
         
-    ## Create directed edges. By default just sets them equal to 1.
-    def addEdges(self,A,B,D=[None]):
-        if any(i == None for i in D):
-            D = [1]*len(A)
-        self.Mat[A,B] = D
+    ## Create directed edges.
+    def addEdges(self,A,B):
+        self.Mat[A,B] = 1
     
     # Bidirectional edges.
-    def addEdgesBi(self,A,B,D=[None]):
-        if any(i == None for i in D):
-            D = [1]*len(A)
-        self.Mat[A,B] = D
-        self.Mat[B,A] = D
+    def addEdgesBi(self,A,B):
+        self.Mat[A,B] = 1
+        self.Mat[B,A] = 1
+
     
     ## Remove nodes and edges.
     def delNode(self,n):
@@ -105,20 +105,32 @@ class Graph:
                      size=self.radii[i]*self.tscales[i]*d,
                      ha='center',va='center',zorder=self.zpos[i])
     
-    def drawArrows(self,col="black",wd=2,hwd=.1,hln=.2,term=None):
+    def drawArrows(self,col=[None],wd=None,hwd=.1,hln=.1,term=None):
+        if any(i == None for i in col):
+            col = self.EdgeColor
+        if wd == None:
+            wd = self.EdgeWidth
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
             connectArr(self.pos[i[0]],self.pos[i[1]],headpos=self.radii[i[1]],
                           width=wd,headwidth=hwd,headlength=hln,z=0,col=col)
     
-    def drawLines(self,col="black",wd=2):
+    def drawLines(self,col=[None],wd=None):
+        if any(i == None for i in col):
+            col = self.EdgeColor
+        if wd == None:
+            wd = self.EdgeWidth
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
             connect(self.pos[i[0]],self.pos[i[1]],col=col,width=wd)
     
-    def drawCurve(self,r=1,col="black",wd=2):
+    def drawCurve(self,col=[None],wd=None,r=1):
+        if any(i == None for i in col):
+            col = self.EdgeColor
+        if wd == None:
+            wd = self.EdgeWidth
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
@@ -156,7 +168,7 @@ def connect(A,B,col="black",width=1,z=0):
     else:
         raise ValueError("A and B do not match or are not recognized")
 
-def connectArr(A,B,col="black",width=1,headpos=0,headwidth=.2,headlength=.2,z=0):
+def connectArr(A,B,col="black",width=1,headpos=0,headwidth=.1,headlength=.1,z=0):
 
     if type(A) == list and type(B) == list or type(A) == np.ndarray and type(B) == np.ndarray:
         if len(A) == 2 and len(B) == 2:
@@ -677,10 +689,10 @@ def genregmat(N=5,d=2):
 
     return D
 
-# Create a connected adjacency matrix
-def connectedGraph(N,directed=True):
+# Create a random connected adjacency matrix
+def connectedGraph(N,directed=True,prob=.2):
     while True:
-        t = randAjdMat(N,directed=directed)
+        t = randAjdMat(N,directed=directed,prob=prob)
         if len(connected(t,0)) == N:
             return t
 ###############################################################################

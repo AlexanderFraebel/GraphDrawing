@@ -1,9 +1,9 @@
 from Graphs import *
 import numpy as np
 
-def petersonGraph():
+def petersonGraph(**kwargs):
 
-    G = Graph(NodeSize=.2)
+    G = Graph(**kwargs)
     
     ctr = 0
     for i in arc([0,0],th=[np.pi/10,np.pi*2+(np.pi/10)],r=2,n=5):
@@ -22,9 +22,9 @@ def petersonGraph():
     return G
 
 
-def bullGraph():
+def bullGraph(**kwargs):
     
-    G = Graph(NodeSize=.2)
+    G = Graph(**kwargs)
     
     ps = [[0,-1],[-.7,0],[.7,0],[-2,.5],[2,.5]]
     
@@ -35,9 +35,9 @@ def bullGraph():
     
     return G
 
-def bowtieGraph():
+def bowtieGraph(**kwargs):
     
-    G = Graph(NodeSize=.2)
+    G = Graph(**kwargs)
     
     ps = [[0,0],[-1,.5],[-1,-.5],[1,.5],[1,-.5]]
     
@@ -48,9 +48,9 @@ def bowtieGraph():
     
     return G
 
-def flowerSnarkGraph():
+def flowerSnarkGraph(**kwargs):
     
-    G = Graph(NodeSize=.2)
+    G = Graph(**kwargs)
     
     ctr = 0
     for i in arc([0,0],th=[np.pi/10,np.pi*2+(np.pi/10)],r=.7,n=5):
@@ -70,8 +70,8 @@ def flowerSnarkGraph():
     
     return G
 
-def hypercubeGraph():
-    G = Graph(NodeSize=.2)
+def hypercubeGraph(**kwargs):
+    G = Graph(**kwargs)
     ctr = 0
     for i in arc([0,0],th=[0,np.pi*2],r=1.2,n=8):
         G.addNode(i,text=str(ctr))
@@ -87,10 +87,10 @@ def hypercubeGraph():
     G.addEdgesBi([i for i in range(8,16)],[i for i in range(9,16)]+[8])
     return G
 
-def completeGraph(N):
+def completeGraph(N,**kwargs):
     
     xy = arc((0,0),2.5,[0,np.pi*2],N)
-    G = Graph()
+    G = Graph(**kwargs)
     for i,pos in enumerate(xy):
         G.addNode(pos,text=str(i))
     
@@ -98,8 +98,8 @@ def completeGraph(N):
         G.addEdgesBi([i]*i,[x for x in range(i)])
     return G
 
-def completeBipartiteGraph(P,Q):
-    G = Graph()
+def completeBipartiteGraph(P,Q,**kwargs):
+    G = Graph(**kwargs)
         
     pp = np.linspace(-2.5,2.5,P)
     qq = np.linspace(-2.5,2.5,Q)
@@ -114,6 +114,20 @@ def completeBipartiteGraph(P,Q):
         G.addEdgesBi([ctr]*P,[i for i in range(P)])
         ctr += 1
     
+    
+    return G
+
+def starGraph(N,**kwargs):
+    G = Graph(**kwargs)
+    
+    G.addNode()
+        
+    xy = arc((0,0),2.5,[0,np.pi*2],N)
+
+    for pos in xy:
+        G.addNode(pos)
+    G.addEdgesBi(0,[i+1 for i in range(N)])
+        
     
     return G
 
@@ -134,17 +148,15 @@ def testfunc():
     #G = completeBipartiteGraph(3,4)
     
     
-    G = petersonGraph()
-    for i in G.radii:
-        i = .1
-    print(G.radii)
-    fig1, ax1 = makeCanvas()
-    G.QuickDraw(fig1,ax1)
+    G = starGraph(5,NodeSize=.2)
+    print(G.pos)
+    makeCanvas()
+    G.QuickDraw()
     plt.title("Original Graph")
     
-    fig2, ax2 = makeCanvas()
+    makeCanvas()
     G.Mat = complement(G.Mat)
-    G.QuickDraw(fig2,ax2)
+    G.QuickDraw()
     plt.title("Complementary Graph")
 
-#testfunc()
+testfunc()
