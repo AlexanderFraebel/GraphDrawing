@@ -5,13 +5,12 @@ from time import time
 
 def pathLength(L,G):
     out = 0
-    t = G.Mat
-    complete(G)
-    D = DistanceMatrix(G)
+    D = G.Dist
     for i in range(len(L)-1):
         out += D[L[i],L[i+1]]
-    G.Mat = t
     return out
+
+
 
 # Brute Force
 # Check every possible path until the shortest one is found
@@ -20,7 +19,7 @@ def pathLength(L,G):
 def TravellingSalesmanPermutation(G):
     if G.size > 10:
         raise ValueError("Too Big for Brute Force Quickly")
-    D = DistanceMatrix(G)
+    D = maskDist(G)
     l = [i for i in range(G.size)]
     DS = np.inf
     P = []
@@ -32,7 +31,7 @@ def TravellingSalesmanPermutation(G):
             DS = ds
             P = i
 
-    return P
+    return list(P)
        
 # Nearest Neighbor Search (Heuristic)
 # Find the path going from nearest vertex to nearest vertex. This can vary
@@ -40,7 +39,7 @@ def TravellingSalesmanPermutation(G):
 # complexity is quadratic and results are usually close to the best path but
 # are not guaranteed to be good.
 def TravellingSalesmanNearest(G):
-    D = DistanceMatrix(G)
+    D = maskDist(G)    
     final = []
     dists = [0]*G.size
     for start in range(G.size):
@@ -60,24 +59,23 @@ def TravellingSalesmanNearest(G):
     return final[np.argmin(dists)]
 
 def testTravellingSalesman():
-    N = 10
+    N = 9
     G1 = randomNodes(N,.1,NodeSize=.1,TextSize=1.5)#,seed=45345)
     complete(G1)
     t0 = time()
     path1 = TravellingSalesmanPermutation(G1)
     t1 = time()
-    complete(G1)
     t2 = time()
     path2 = TravellingSalesmanNearest(G1)
     t3 = time()
     empty(G1)
     
-    print("Brute Force Path in {:.5f} seconds".format(t1-t0))
+    print("Brute Force Path in {:.2f} seconds".format(t1-t0))
     print(path1)
-    print(pathLength(path1,G1))
-    print("Best Nearest Neighbor Path in {:.5f} seconds".format(t3-t2))
+    print("{:.3f}".format(pathLength(path1,G1)))
+    print("Best Nearest Neighbor Path in {:.2f} seconds".format(t3-t2))
     print(path2)
-    print(pathLength(path2,G1))
+    print("{:.3f}".format(pathLength(path2,G1)))
     
     makeCanvas(size=[6,6])
     G1.addPath(path1)
@@ -85,7 +83,7 @@ def testTravellingSalesman():
     G1.drawLines()
     
     makeCanvas(size=[6,6])
-    empty(G)
+    empty(G1)
     G1.addPath(path2)
     G1.drawNodes()
     G1.drawLines()

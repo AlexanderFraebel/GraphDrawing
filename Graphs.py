@@ -26,8 +26,11 @@ class Graph:
         self.tscales = []
         self.zpos = []
         
-        # Prepare a matrix of connections
+        # Prepare an adjacency matrix
         self.Mat = np.asarray([0])
+        
+        # Prepare a distance matrix
+        self.Dist = np.asarray([0])
     
     ## Create new node
     def addNode(self,xy=[0,0],r=None,col=[None],text="",tscale=None,z=1):
@@ -53,6 +56,14 @@ class Graph:
         t = np.zeros((self.size,self.size))
         t[:-1,:-1] = self.Mat
         self.Mat = t
+        
+        # Expand the distance matrix
+        if self.size == 1:
+            pass
+        else:
+            d = [dist(self.pos[i],self.pos[-1]) for i in range(self.size-1)]
+            self.Dist = np.column_stack((self.Dist,d))
+            self.Dist = np.row_stack((self.Dist,d+[0]))
         
     ## Create directed edges.
     def addEdges(self,A,B,directed=False):
@@ -350,6 +361,13 @@ def DistanceMatrix(G):
                 D[i,j] = dist(G.pos[i],G.pos[j])
     return D
 
+# Take a Graph object and return a copy of its distance matrix masked so that
+# edges which don't exist in the adjacency matrix are set to infinity
+def maskDist(G):
+    D = G.Dist.copy()
+    for x,y in np.argwhere(G.Mat == 0):
+        D[x,y] = np.inf
+    return D
 
 ###############################################################################
 ###############################################################################
@@ -798,19 +816,20 @@ def arcDiagram(R,L=[None],title="",size=[7,7],nodeSize=.25,
 ##
 ###############################################################################
 ###############################################################################
-def test():
+def testGraphs():
 
     # Make a graph
     G = Graph(NodeSize=.5)
 
     # Add a node with all default properties
     G.addNode()
+    print(G.Dist)
     # Add a node at a different position with text
     G.addNode([-2,.5],text="Hello")
-
+    print(G.Dist)
     # Add a node at a different position with different size
     G.addNode([1,-1.5],r=.3)
-    
+    print(G.Dist)
     # Create some edges
     G.addEdges([0,1],[1,2])
     
@@ -860,4 +879,4 @@ def test():
     
     complement(G.Mat)
 
-#test()
+#testGraphs()
