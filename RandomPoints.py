@@ -9,11 +9,11 @@ def isclose(P,L,d):
     return False
 
 
-def randomNodes(N,d,xlim = [-2.8,2.8], ylim = [-2.8,2.8],
-                NodeSize=.2, TextSize=1, NodeColor=(.53, .81, .94), seed=None):
+def randomNodes(N,d,xlim = [-2.8,2.8], ylim = [-2.8,2.8], seed = None,
+                **kwargs):
     if seed != None:
         np.random.seed(seed)
-    G = Graph(NodeSize=NodeSize,TextSize=TextSize,NodeColor=NodeColor)
+    G = Graph(**kwargs)
     
     for i in range(N):
         ctr = 0
@@ -33,7 +33,7 @@ def randomNodes(N,d,xlim = [-2.8,2.8], ylim = [-2.8,2.8],
 def testRandomPoints():
     makeCanvas()
     
-    G = randomNodes(50,.3)
+    G = randomNodes(50,.3,NodeSize=.2)
     G.drawNodes()
     
 #testRandomPoints()

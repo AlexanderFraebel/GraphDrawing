@@ -55,14 +55,21 @@ class Graph:
         self.Mat = t
         
     ## Create directed edges.
-    def addEdges(self,A,B):
+    def addEdges(self,A,B,directed=False):
         self.Mat[A,B] = 1
+        if directed == False:
+            self.Mat[B,A] = 1
     
     # Bidirectional edges.
     def addEdgesBi(self,A,B):
         self.Mat[A,B] = 1
         self.Mat[B,A] = 1
 
+    def addPath(self,L,directed=False):
+        for i in range(len(L)-1):
+            self.Mat[L[i],L[i+1]] = 1
+            if directed == False:
+                self.Mat[L[i+1],L[i]] = 1
     
     ## Remove nodes and edges.
     def delNode(self,n):
@@ -134,7 +141,7 @@ class Graph:
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
-            bezierCurve(self.pos[i[0]],self.pos[i[0]],r=1,col=col,lw=wd)
+            bezierCurve(self.pos[i[0]],self.pos[i[0]],r=r,col=col,lw=wd)
 
 ###############################################################################
 ###############################################################################
@@ -335,13 +342,13 @@ def distpt(A,B,d):
 
 # Create a 
 def DistanceMatrix(G):
-    if type(G) == Graph:
-        N = G.size
-        for i in range(N):
-            for j in range(N):
-                if G.Mat[i,j] != 0:
-                    G.Mat[i,j] = dist(G.pos[i],G.pos[j])
-    return G
+    D = np.zeros([G.size,G.size])
+    
+    for i in range(G.size):
+        for j in range(G.size):
+            if G.Mat[i,j] != 0:
+                D[i,j] = dist(G.pos[i],G.pos[j])
+    return D
 
 
 ###############################################################################
@@ -408,6 +415,8 @@ def complement(G):
 def complete(G):
     if type(G) == Graph:
         G.Mat = np.ones([G.size,G.size])
+        for i in range(G.size):
+            G.Mat[i,i] = 0
 
 # Remove all edges from a Graph
 def empty(G):
@@ -707,8 +716,8 @@ def connectedGraph(N,directed=True,prob=.2):
 # then with options to use arrows (directed) or lines (undirected) and to add
 # a curve
 def connectogram(R, L=[None], directed = False, curve = 0, title="" ,size=[7,7], 
-                 nodeSize=.3, nodeCol = (.53, .81, .94), lineSize  = 2, 
-                 lineCol = "black"):
+                 TextSize=1.5, NodeSize=.3, NodeColor = (.53, .81, .94), 
+                 EdgeWidth = 2, EdgeColor = "black"):
     
     fig, ax = makeCanvas(size=size)
     
@@ -717,7 +726,8 @@ def connectogram(R, L=[None], directed = False, curve = 0, title="" ,size=[7,7],
         L = [str(i) for i in range(n)]
 
     xy = arc((0,0),2.5,[0,np.pi*2],n)
-    G = Graph(NodeSize=nodeSize,TextSize=1.5,NodeColor = nodeCol)
+    G = Graph(NodeSize=NodeSize,TextSize=1.5,NodeColor = NodeColor, 
+              EdgeWidth = EdgeWidth, EdgeColor = EdgeColor)
     
     for i,p in enumerate(xy):
         G.addNode(p,text=str([L[i]][0]),z=2)
@@ -728,19 +738,19 @@ def connectogram(R, L=[None], directed = False, curve = 0, title="" ,size=[7,7],
     G.drawNodes()
     
     if directed == True:
-        G.drawArrows(col=lineCol,wd=lineSize)
+        G.drawArrows()
     else:
         
         if curve == 0:
-            G.drawLines(col=lineCol)
+            G.drawLines()
         if curve != 0:
             for i in range(G.size):
                 for j in range(i):
                     if G.Mat[i,j] != 0 and i != j:
                         if abs(i - j) >= (n//2):
-                            bezierCurve(G.pos[i],G.pos[j],r=-curve,color=lineCol)
+                            bezierCurve(G.pos[i],G.pos[j],r=-curve,color=EdgeColor)
                         else:
-                            bezierCurve(G.pos[i],G.pos[j],r=curve,color=lineCol)
+                            bezierCurve(G.pos[i],G.pos[j],r=curve,color=EdgeColor)
 
                 
                     

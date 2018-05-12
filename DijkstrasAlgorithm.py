@@ -10,7 +10,7 @@ import math
 
 
 def updatedists(x,M,d,pred,visited,unvisited):
-    # Check each neighbot of node x
+    # Check each neighbor of node x
     for num,val in enumerate(M[x,]):
         # If it is unvisited
         if num not in visited and val != 0:
@@ -34,7 +34,7 @@ def updatedists(x,M,d,pred,visited,unvisited):
 
 ## Wrapper function
 def dijkstra(M,s=0):
-
+    
     ## List of distances from start are all unknown to begin with
     d = [math.inf]*len(M)
 

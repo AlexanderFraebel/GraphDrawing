@@ -142,5 +142,5 @@ def testPlatonicSolids():
     G = icosahedronGraph(NodeSize=.2)
     G.QuickDraw()
 
-testPlatonicSolids()
+#testPlatonicSolids()
     
