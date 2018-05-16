@@ -2,15 +2,14 @@ from Graphs import *
 from RandomPoints import randomNodes
 from time import time
 
-
-        
+# Create a list of the edges in the Graph sortest from shortest to longest
 def distList(G):
     L = []
     E = []
     for i in range(G.size):
         for j in range(i):
             if G.Mat[i,j] != 0 or G.Mat[j,i] != 0:
-                L.append(dist(G.pos[i],G.pos[j]))
+                L.append(G.Dist[i,j])
                 E.append([i,j])
 
     o = np.argsort(L)
@@ -28,16 +27,14 @@ def PrimMinTree(G,modify=True):
     T.add(0)
     out = []
     while len(T) < G.size:
-        minD = np.Inf
-        newT = [0,0]
         for edge in E:
             if (edge[0] not in T and edge[1] in T) or (edge[1] not in T and edge[0] in T):
                 
                 T.add(edge[0])
                 T.add(edge[1])
-                out.append(newT)
+                out.append(edge)
                 if modify == True:
-                    G.addEdgesBi([edge[0]],[edge[1]])
+                    G.addEdges([edge[0]],[edge[1]])
                 break
     return out
 
@@ -70,7 +67,7 @@ def KruskalMinTree(G,modify=True):
         del F[p2]
         out.append(edge)
         if modify == True:
-            G.addEdgesBi([edge[0]],[edge[1]])
+            G.addEdges([edge[0]],[edge[1]])
             
         # No need to keep going through the list if all the trees have been
         # merged already.
@@ -81,32 +78,37 @@ def KruskalMinTree(G,modify=True):
 
 
 def testMinimumSpanningTree():
-    N = 300
+    sd = np.random.randint(1,999)
+    N = 150
+    
     makeCanvas(size=[7,7])
-    G = randomNodes(N,.1,NodeColor='black',NodeSize=.1,seed=45345)
+    G = randomNodes(N,.1,NodeColor='black',NodeSize=.05,seed=sd)
     complete(G)
-    G.radii = [.03]*N
     
     t0 = time()
-    Krus = KruskalMinTree(G)
+    Krus = KruskalMinTree(G,modify=False)
     print("Kruskal: {:.3f} seconds".format(time()-t0))
+    #print(Krus)
     
+    empty(G)
+    G.addEdges(Krus)
     G.drawNodes()
     G.drawLines()
     
     
     
-    N = 300
     makeCanvas(size=[7,7])
-    G = randomNodes(N,.1,NodeColor='black',NodeSize=.1,seed=45345)
+    G = randomNodes(N,.1,NodeColor='black',NodeSize=.05,seed=sd)
     complete(G)
-    G.radii = [.03]*N
     
     t0 = time()
-    Prim = PrimMinTree(G)
+    Prim = PrimMinTree(G,modify=False)
     print("Prim:    {:.3f} seconds".format(time()-t0))
+    #print(Prim)
     
+    empty(G)
+    G.addEdges(Prim)
     G.drawNodes()
     G.drawLines()
     
-testMinimumSpanningTree()
+#testMinimumSpanningTree()

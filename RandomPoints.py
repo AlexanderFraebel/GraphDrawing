@@ -15,25 +15,26 @@ def randomNodes(N,d,xlim = [-2.8,2.8], ylim = [-2.8,2.8], seed = None,
         np.random.seed(seed)
     G = Graph(**kwargs)
     
+    out = []
     for i in range(N):
         ctr = 0
         x = np.random.uniform(xlim[0],xlim[1],1)
         y = np.random.uniform(ylim[0],ylim[1],1)
-        while isclose([x,y],G.pos,d):
+        while isclose([x,y],out,d):
             x = np.random.uniform(xlim[0],xlim[1],1)
             y = np.random.uniform(ylim[0],ylim[1],1)
             ctr += 1
             if ctr > 200:
                 break
-    
-        G.addNode([x[0],y[0]])  
+        out.append([x,y])
+    G.addNodes(out)  
     
     return G
 
 def testRandomPoints():
     makeCanvas()
-    
-    G = randomNodes(50,.3,NodeSize=.2)
+    G = randomNodes(50,.3,NodeSize=.2,seed=8437)
     G.drawNodes()
     
+
 #testRandomPoints()

@@ -31,6 +31,9 @@ class Graph:
         
         # Prepare a distance matrix
         self.Dist = np.asarray([0])
+        
+        # Prepare a curve matrix
+        self.Curves = np.asarray([0])
     
     ## Create new node
     def addNode(self,xy=[0,0],r=None,col=[None],text="",tscale=None,z=1):
@@ -58,21 +61,57 @@ class Graph:
         self.Mat = t
         
         # Expand the distance matrix
-        if self.size == 1:
-            pass
-        else:
-            d = [dist(self.pos[i],self.pos[-1]) for i in range(self.size-1)]
-            self.Dist = np.column_stack((self.Dist,d))
-            self.Dist = np.row_stack((self.Dist,d+[0]))
+        d = [dist(self.pos[i],self.pos[-1]) for i in range(self.size-1)]
+        u = np.zeros((self.size,self.size))
+        u[:-1,:-1] = self.Dist
+        u[:-1,self.size-1] = d
+        u[self.size-1,:-1] = d
+        self.Dist = u
         
-    ## Create directed edges.
-    def addEdges(self,A,B,directed=False):
-        self.Mat[A,B] = 1
-        if directed == False:
-            self.Mat[B,A] = 1
+        # Expand the curve matrix
+        v = np.zeros((self.size,self.size))
+        v[:-1,:-1] = self.Curves
+        self.Curves = v
+
     
+    def addNodes(self,xy=[]):
+        n = len(xy)
+        
+        self.radii += [self.NodeSize]*n
+        self.colors += [self.NodeColor]*n
+        self.pos += xy
+        self.texts += [str(i) for i in range(n+1,n+n)]
+        self.tscales += [self.TextSize]*n
+        self.zpos += [1]*n
+        
+        self.size += n
+        
+        t = np.zeros((self.size,self.size))
+        t[:-n,:-n] = self.Mat
+        self.Mat = t
+        
+        self.Dist = DistanceMatrix(self)
+        
+        t = np.zeros((self.size,self.size))
+        t[:-n,:-n] = self.Curves
+        self.Curves = t
+    
+    ## Create directed edges.
+    ## If only A is given then it must be a list of edges to be added
+    ## If both A and B are given then edges will be created between A and B
+    def addEdges(self,A,B=[],directed=False,r=0):
+        if B == []:
+            for xy in A:
+                self.Mat[xy[0],xy[1]] = 1
+                if directed == False:
+                    self.Mat[xy[1],xy[0]] = 1
+        else:
+            self.Mat[A,B] = 1
+            if directed == False:
+                self.Mat[B,A] = 1
+            
     # Bidirectional edges.
-    def addEdgesBi(self,A,B):
+    def addEdgesBi(self,A,B=[]):
         self.Mat[A,B] = 1
         self.Mat[B,A] = 1
 
@@ -93,6 +132,8 @@ class Graph:
         self.size -= 1
         self.Mat = np.delete(self.Mat,n,0)
         self.Mat = np.delete(self.Mat,n,1)
+        self.Dist = np.delete(self.Dist,n,0)
+        self.Dist = np.delete(self.Dist,n,1)
     
     def delEdges(self,A,B):
         self.Mat[A,B] = 0
@@ -134,7 +175,7 @@ class Graph:
             connectArr(self.pos[i[0]],self.pos[i[1]],headpos=self.radii[i[1]],
                           width=wd,headwidth=hwd,headlength=hln,z=0,col=col)
     
-    def drawLines(self,col=[None],wd=None):
+    def drawLines(self,col=[None],wd=None,stroke=0):
         if any(i == None for i in col):
             col = self.EdgeColor
         if wd == None:
@@ -142,17 +183,17 @@ class Graph:
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
-            connect(self.pos[i[0]],self.pos[i[1]],col=col,width=wd)
+            connect(self.pos[i[0]],self.pos[i[1]],col=col,width=wd,stroke=stroke)
     
-    def drawCurve(self,col=[None],wd=None,r=1):
-        if any(i == None for i in col):
-            col = self.EdgeColor
-        if wd == None:
-            wd = self.EdgeWidth
+    def drawCurves(self,color=[None],lw=None):
+        if any(i == None for i in color):
+            color = self.EdgeColor
+        if lw == None:
+            lw = self.EdgeWidth
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
                 continue
-            bezierCurve(self.pos[i[0]],self.pos[i[0]],r=r,col=col,lw=wd)
+            bezierCurve(self.pos[i[0]],self.pos[i[1]],r=self.Curves[i[0],i[1]],color=color,lw=lw)
 
 ###############################################################################
 ###############################################################################
@@ -177,9 +218,11 @@ def makeCanvas(xlim=[-3,3],ylim=[-3,3],size=[7,7]):
 ###############################################################################
 ###############################################################################
             
-def connect(A,B,col="black",width=1,z=0):
+def connect(A,B,col="black",width=1,stroke=0,z=0):
+    
     if type(A) == list and type(B) == list or type(A) == np.ndarray and type(B) == np.ndarray:
         if len(A) == 2 and len(B) == 2:
+            plt.plot([A[0],B[0]],[A[1],B[1]],color=plt.gca().get_facecolor(),lw=width+stroke,zorder=z)
             plt.plot([A[0],B[0]],[A[1],B[1]],color=col,lw=width,zorder=z)
         else:
             raise ValueError("A and B must length 2")    
@@ -252,7 +295,8 @@ def bezierCurve(A,B,r=1,color="black",lw=2,z=0):
     plt.plot(out[0],out[1],color=color,lw=lw,zorder=z)
     return out
     
-# Similar but for cublic splines
+# Similar but for cublic splines control points are at distance r1 perpendicular
+# from the midpoint of the line and separated by distance r2.
 def bezierCurveCubic(A,B,r1=1,r2=1,color="black",lw=2,z=0):
     
     t = np.linspace(0,1,50)
@@ -351,14 +395,14 @@ def distpt(A,B,d):
     p = (dd-d)/(dd)
     return perpt(A,B,p)
 
-# Create a 
+# Create a complete symmetric euclidean distance matrix
 def DistanceMatrix(G):
     D = np.zeros([G.size,G.size])
     
     for i in range(G.size):
-        for j in range(G.size):
-            if G.Mat[i,j] != 0:
-                D[i,j] = dist(G.pos[i],G.pos[j])
+        for j in range(i):
+            d = dist(G.pos[i],G.pos[j])
+            D[[i,j],[j,i]] = d
     return D
 
 # Take a Graph object and return a copy of its distance matrix masked so that

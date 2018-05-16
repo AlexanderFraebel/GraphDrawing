@@ -103,7 +103,7 @@ def completeBipartiteGraph(P,Q,**kwargs):
         
     for i in qq:
         G.addNode([i,-1])
-        G.addEdgesBi([ctr]*P,[i for i in range(P)])
+        G.addEdges([G.size-1]*P,[i for i in range(P)])
     
     
     return G
@@ -133,6 +133,36 @@ def cycleGraph(N,**kwargs):
         
     
     return G
+
+def pappusGraph(**kwargs):
+    G = Graph(**kwargs)
+    
+    xy1 = arc((0,0),.6,[0,np.pi*2],6)
+    xy2 = arc((0,0),1.8,[0,np.pi*2],6)
+    xy3 = arc((0,0),2.4,[0,np.pi*2],6)
+    
+    for pos in xy1:
+        G.addNode(pos)
+        
+    for pos in xy2:
+        G.addNode(pos)
+        
+    for pos in xy3:
+        G.addNode(pos)
+
+    
+    A = [0,1,2,6,7,8,9,10,11,12,13,14,15,16,17]
+    B = [3,4,5,12,13,14,15,16,17,13,14,15,16,17,12]
+    G.addEdges(A,B)
+    
+    A = [0,0,1,1,2,2,3,3,4,4,5,5]
+    B = [7,11,6,8,7,9,8,10,9,11,6,10]
+    G.addEdges(A,B)
+    
+
+    return G
+        
+    
 ###############################################################################
 ###############################################################################
 ##
@@ -142,23 +172,18 @@ def cycleGraph(N,**kwargs):
 ###############################################################################
 
 def testParticularGraphs():
-    #G = bullGraph()
-    #G = petersonGraph()
-    #G = bowtieGraph()
-    #G = flowerSnarkGraph()
-    #G = completeGraph(8)
-    #G = completeBipartiteGraph(3,4)
-    
-    
-    G = cycleGraph(5,NodeSize=.2)
-    print(G.pos)
-    makeCanvas()
-    G.QuickDraw()
-    plt.title("Original Graph")
-    
-    makeCanvas()
-    G.Mat = complement(G.Mat)
-    G.QuickDraw()
-    plt.title("Complementary Graph")
 
-#testParticularGraphs()
+    G = pappusGraph(NodeSize=.15,TextSize=1.5)
+    f,a = makeCanvas(size=[9,9])
+    G.drawNodes()
+    G.drawLines()
+    G.drawText()
+    #plt.title("Original Graph")
+    print()
+
+    #makeCanvas()
+    #G.Mat = complement(G.Mat)
+    #G.QuickDraw()
+    #plt.title("Complementary Graph")
+
+testParticularGraphs()

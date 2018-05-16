@@ -2,6 +2,8 @@ from Graphs import *
 import random
 from ParticularGraphs import hypercubeGraph, flowerSnarkGraph
 
+# Performs a depth first search where the adjacent node with the lowest index
+# is always chosen next.
 def depthTree(R,x):
     checked = []
     working = [x]
@@ -22,7 +24,8 @@ def depthTree(R,x):
 
     return preds
 
-
+# Performs a breadth first search where the adjacent node with the lowest index
+# is always chosen next.
 def widthTree(R,x):
     checked = set()
     working = [x]
@@ -105,4 +108,4 @@ def testTree():
         connectArr(G.pos[j],G.pos[i],headpos=.2,headwidth=.1,headlength=.1,col='black',width=3)
     plt.title("Random Search",size=30)
     
-testTree()
+#testTree()
