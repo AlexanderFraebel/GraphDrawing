@@ -80,7 +80,7 @@ class Graph:
         self.radii += [self.NodeSize]*n
         self.colors += [self.NodeColor]*n
         self.pos += xy
-        self.texts += [str(i) for i in range(n+1,n+n)]
+        self.texts += [str(i) for i in range(self.size,self.size+n)]
         self.tscales += [self.TextSize]*n
         self.zpos += [1]*n
         
@@ -99,7 +99,7 @@ class Graph:
     ## Create directed edges.
     ## If only A is given then it must be a list of edges to be added
     ## If both A and B are given then edges will be created between A and B
-    def addEdges(self,A,B=[],directed=False,r=0):
+    def addEdges(self,A,B=[],directed=False):
         if B == []:
             for xy in A:
                 self.Mat[xy[0],xy[1]] = 1
@@ -115,11 +115,22 @@ class Graph:
         self.Mat[A,B] = 1
         self.Mat[B,A] = 1
 
+
+    def addCurves(self,A,B=[],r=1):
+        if B == []:
+            for xy in A:
+                self.Curves[xy[0],xy[1]] = r
+        else:
+            self.Curves[A,B] = r
+                
+    # Input a list of edges to produce a path.
     def addPath(self,L,directed=False):
         for i in range(len(L)-1):
             self.Mat[L[i],L[i+1]] = 1
             if directed == False:
                 self.Mat[L[i+1],L[i]] = 1
+    
+    
     
     ## Remove nodes and edges.
     def delNode(self,n):
@@ -132,8 +143,12 @@ class Graph:
         self.size -= 1
         self.Mat = np.delete(self.Mat,n,0)
         self.Mat = np.delete(self.Mat,n,1)
+        
         self.Dist = np.delete(self.Dist,n,0)
         self.Dist = np.delete(self.Dist,n,1)
+        
+        self.Curves = np.delete(self.Curves,n,0)
+        self.Curves = np.delete(self.Curves,n,1)
     
     def delEdges(self,A,B):
         self.Mat[A,B] = 0
@@ -192,6 +207,8 @@ class Graph:
             lw = self.EdgeWidth
         for i in np.argwhere(self.Mat != 0):
             if i[0] == i[1]:
+                continue
+            if self.Curves[i[0],i[1]] == np.Nan:
                 continue
             bezierCurve(self.pos[i[0]],self.pos[i[1]],r=self.Curves[i[0],i[1]],color=color,lw=lw)
 
@@ -413,6 +430,35 @@ def maskDist(G):
         D[x,y] = np.inf
     return D
 
+# Take a Graph object and return a copy of its curve matrix masked so that
+# edges which don't exist in the adjacency matrix are set to NaN
+def maskCurves(G):
+    D = G.Curves.copy()
+    for x,y in np.argwhere(G.Mat == 0):
+        D[x,y] = np.NaN
+    return D
+
+# Take a Graph object and a matrix. Modifies the matrix so that everywhere that
+# the Graph's adjacency matrix is equal to zero is set to the mask. Possible
+# mask values are NaN, Inf, and 0.
+def maskMatrix(G,D,mask="NaN"):
+
+    if np.size(G.Mat) != np.size(D):
+        raise ValueError("Matrices do not match")
+   
+    if mask == "NaN":
+        for x,y in np.argwhere(G.Mat == 0):
+            D[x,y] = np.NaN
+            
+    if mask == "0":
+        for x,y in np.argwhere(G.Mat == 0):
+            D[x,y] = 0
+            
+    if mask == "Inf":
+        for x,y in np.argwhere(G.Mat == 0):
+            D[x,y] = np.Inf
+            
+
 ###############################################################################
 ###############################################################################
 ##
@@ -422,18 +468,30 @@ def maskDist(G):
 ###############################################################################
 
 # Creates a dictionary of out-edges based on either a graph or a matrix
-def edgeDict(G):
+def edgeDict(G,bydist=False):
     
     edges = dict()
     if type(G) == Graph:
         N = G.size
         for i in range(N):
-            edges[str(i)] = []
+            ds = []
+            es = []
             for j in range(N):
                 if G.Mat[i,j] != 0:
-                    edges[str(i)] += [j]
+                    es.append(j)
+                    if bydist == True:
+                        ds.append(dist(G.pos[i],G.pos[j]))
+            if bydist == True:  
+                o = np.argsort(ds)
+                edges[str(i)] = list(np.array(es)[o])
+            else:
+                edges[str(i)] = es
+                        
         return edges
+    
     elif issqmat(G):
+        if bydist == True:
+            print("Input must be Graph object in order to use distances")
         N = np.shape(G)[0]
         for i in range(N):
             edges[str(i)] = []
@@ -441,6 +499,7 @@ def edgeDict(G):
                 if G[i,j] != 0:
                     edges[str(i)] += [j]
         return edges
+    
     else:
         raise ValueError("Input must be Graph object or ndarray")
         
@@ -556,10 +615,10 @@ def subgraph(R,L):
 
 # Return the depth of each node using a depth first search
 # The search considers the "next" node to be the one with the lowest index
-def dfsDepth(R,x):
+def dfsDepth(R,x,bydist=False):
     checked = []
     working = [x]
-    d = edgeDict(R)
+    d = edgeDict(R,bydist=bydist)
     depth = [np.NaN]*len(d)
     while len(working) > 0:
         cur = working[-1]
@@ -576,10 +635,10 @@ def dfsDepth(R,x):
     return depth
 
 # Return the depth of each node using a breadth first search
-def bfsDepth(R,x):
+def bfsDepth(R,x,bydist=False):
     checked = []
     working = [x]
-    d = edgeDict(R)
+    d = edgeDict(R,bydist=bydist)
     depth = [np.NaN]*len(d)
     while len(working) > 0:
         cur = working[0]

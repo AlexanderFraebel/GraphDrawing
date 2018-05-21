@@ -2,10 +2,10 @@ from Graphs import *
 import random
 from ParticularGraphs import hypercubeGraph, flowerSnarkGraph
 
-def depthTree(R,x):
+def depthTree(R,x,bydist=False):
     checked = []
     working = [x]
-    d = edgeDict(R)
+    d = edgeDict(R,bydist=bydist)
     cur = x
     preds = [x]*len(d)
     while len(working) > 0:
@@ -23,10 +23,10 @@ def depthTree(R,x):
     return preds
 
 
-def widthTree(R,x):
+def widthTree(R,x,bydist=False):
     checked = set()
     working = [x]
-    d = edgeDict(R)
+    d = edgeDict(R,bydist=bydist)
     preds = [x]*len(d)
     cur = x
     while len(working) > 0:
@@ -64,8 +64,8 @@ def randomTree(R,x):
 def testTree():
     G = flowerSnarkGraph(NodeSize=.2)
     N = 8
-    d1 = depthTree(G.Mat,N)
-    d2 = widthTree(G.Mat,N)
+    d1 = depthTree(G,N,bydist=True)
+    d2 = widthTree(G,N,bydist=True)
     d3 = randomTree(G.Mat,N)
     G.colors[N] = 'orange'
     

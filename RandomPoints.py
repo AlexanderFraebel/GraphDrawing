@@ -26,7 +26,7 @@ def randomNodes(N,d,xlim = [-2.8,2.8], ylim = [-2.8,2.8], seed = None,
             ctr += 1
             if ctr > 200:
                 break
-        out.append([x,y])
+        out.append([x[0],y[0]])
     G.addNodes(out)  
     
     return G
