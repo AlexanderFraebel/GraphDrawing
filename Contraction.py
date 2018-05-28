@@ -41,5 +41,3 @@ mergeNodes([7,9,2],G)
 G.drawNodes()
 G.drawText()
 G.drawArrows()
-
-print(type(None))

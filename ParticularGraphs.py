@@ -161,7 +161,17 @@ def pappusGraph(**kwargs):
     
 
     return G
-        
+
+def GoldnerHararyGraph(**kwargs):
+    G = Graph(**kwargs)
+    
+    G.addNodes([[-2.4,-2],[2.4,-2],[0,2],[0,-1.7],[0,-1.2],[-.3,-.7],[.3,-.7],
+                [0,0],[-.3,.5],[.3,.5],[0,1.5]])
+    
+    G.addEdges([0,1,2,0,1,0,1,3,0,4,1,4,0,1,4,5,6,0,7,1,7, 0, 1, 8, 9, 2],
+               [1,2,0,3,3,4,4,4,5,5,6,6,7,7,7,7,7,8,8,9,9,10,10,10,10,10])
+    
+    return G
     
 ###############################################################################
 ###############################################################################
@@ -173,7 +183,7 @@ def pappusGraph(**kwargs):
 
 def testParticularGraphs():
 
-    G = pappusGraph(NodeSize=.15,TextSize=1.5)
+    G = GoldnerHararyGraph(NodeSize=.15,TextSize=1.5)
     f,a = makeCanvas(size=[9,9])
     G.drawNodes()
     G.drawLines()

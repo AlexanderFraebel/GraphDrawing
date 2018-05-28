@@ -3,9 +3,11 @@ from Graphs import *
 ## Lowpoint of vertex "v" is the lowest depth of all descendats of "v" and of
 ## the neighbors of "v" other than its parent (in the dfs ordering)
 
-def biconnected(R,x):
+def biconnected(G):
+    x = 0
+    
     # Create a dictionary of edges
-    d = edgeDict(R)
+    d = edgeDict(G.Mat)
     
     # The traits we need to keep track of.
     pred = [np.NAN]*len(d)
@@ -20,28 +22,33 @@ def biconnected(R,x):
     
     # For keeping track of where we are and have been in the graph
     checked = []
-    working = [x]
+    working = [0]
     
     # The explore function is recursive
-    explore(d,x,checked,working,pred,depth,lowpoint,cut,edges,verts)
+    for i in range(G.size):
+        t = [sublist for sublist in verts]
+        if i in t:
+            continue
+        working = [i]
+        explore(d,i,checked,working,pred,depth,lowpoint,cut,edges,verts)
     
-    # Check if there is anything left
-    v = set()
-    if len(edges) > 0:
-        print("Component: ",end="")
-        while len(edges) > 0:
-            w = edges.pop()
-            v.add(w[0])
-            v.add(w[1])
-            print(w,end="")
-    verts.append(v)
+        # Check if there is anything left
+        v = set()
+        if len(edges) > 0:
+            #print("Component: ",end="")
+            while len(edges) > 0:
+                w = edges.pop()
+                v.add(w[0])
+                v.add(w[1])
+                #print(w,end="")
+        verts.append(v)
     
-    print("\n\nBiconnected Subgraphs:\n{}".format(verts))
+    #print("\n\nBiconnected Subgraphs:\n{}".format(verts))
     
-    print("\n")
-    nodes = [i for i in range(len(d))]
-    for i in zip(nodes,pred,depth,lowpoint,cut):
-        print(i)
+    #print("\n")
+    #nodes = [i for i in range(len(d))]
+    #for i in zip(nodes,pred,depth,lowpoint,cut):
+    #    print(i)
     
     
     return depth,lowpoint,verts
@@ -75,16 +82,16 @@ def explore(d,x,checked,working,pred,depth,lowpoint,cut,edges,verts):
                 
                 if depth[x] == 0 and ch > 1 or depth[x] > 0 and lowpoint[i] >= depth[x]:
                     cut[x] = True
-                    print("Component: ".format(x),end="")
+                    #print("Component: ".format(x),end="")
                     w = 0
                     v = set()
                     while w != (x,i):
                         w = edges.pop()
                         v.add(w[0])
                         v.add(w[1])
-                        print(w,end="")
+                        #print(w,end="")
                     verts.append(v)
-                    print()
+                   # print()
                 
                 
             # If the node has been visited before
@@ -127,7 +134,7 @@ def testBiconnectedComponents():
         #plt.text(p[0]+.05,p[1]+.3,str(j),color='red',size="x-large")
     
         
-    d,l,v = biconnected(G.Mat,5)
+    d,l,v = biconnected(G)
     for i in range(15):
         p = G.pos[i]
         plt.text(p[0]+.05,p[1]+.3,str(d[i]),color='red',size="x-large")
