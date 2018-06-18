@@ -61,10 +61,11 @@ makeCanvas(size=[12,12])
 G = randomNodes(20,.3)
 G.texts = [i for i in range(20)]
 G.tscales = [2]*20
-G.radii = [.1]*20
+G.radii = [.06]*20
 G.drawNodes()
-G.drawText()
 
 c = convexHull(G,directed=True)
 print(c)
-G.drawArrows()
+G.drawLines()
+
+

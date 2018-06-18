@@ -58,25 +58,25 @@ def apolloRecur(a,b,c,d,lim,itr,G):
             
     if itr == 0:
         e0 = secondSol(a,b,c,d,G)
-        G.addNode([e0.pos.real,e0.pos.imag])
+        G.addNode([e0.pos.real,e0.pos.imag],r=e0.r)
         apolloRecur(e0,b,c,d,lim,itr+1,G)
     
     
     e1 = secondSol(b,a,c,d,G)
     if e1.cur < lim:
-        G.addNode([e1.pos.real,e1.pos.imag])
+        G.addNode([e1.pos.real,e1.pos.imag],r=e1.r)
         apolloRecur(e1,a,c,d,lim,itr+1,G)
     
     
     e2 = secondSol(c,a,b,d,G)
     if e2.cur < lim:
-        G.addNode([e2.pos.real,e2.pos.imag])
+        G.addNode([e2.pos.real,e2.pos.imag],r=e2.r)
         apolloRecur(e2,a,b,d,lim,itr+1,G)
         
         
     e3 = secondSol(d,a,b,c,G)
     if e3.cur < lim:
-        G.addNode([e3.pos.real,e3.pos.imag])
+        G.addNode([e3.pos.real,e3.pos.imag],r=e3.r)
         apolloRecur(e3,a,b,c,lim,itr+1,G)
       
     
@@ -88,7 +88,7 @@ def ApollonianGasket(A,B,C,lim=100,**kwargs):
 
 
     for i in [a,b,c,d]:
-        G.addNode([i.pos.real,i.pos.imag])
+        G.addNode([i.pos.real,i.pos.imag],r=i.r)
 
     G.addEdges([1,2,3],[2,3,1])
 
@@ -96,11 +96,20 @@ def ApollonianGasket(A,B,C,lim=100,**kwargs):
     G.delNode(0)
     return G
     
-makeCanvas([-2.2,2.2],[-2.2,2.2],size=[16,16])
+N = 50
+G = ApollonianGasket(1,1,1,N,NodeColor='gray')
 
-N = 30
-G = ApollonianGasket(1,1,1,N,NodeSize=.04,NodeColor='gray')
+makeCanvas([-2.2,2.2],[-2.2,2.2],size=[14,20])
 
-G.drawNodes()
-G.drawLines()
-#G.drawText()
+for ctr,i in enumerate([5,10,20,30,40,50]):
+    L = []
+    for pos,val in enumerate(G.radii):
+        if 1/val < i:
+            L.append(pos)
+    plt.subplot(3,2,ctr+1)
+    GG = subgraph(G,L)
+    
+    plt.gca().axis('off')
+    #GG.drawNodes()
+    GG.drawLines()
+    #GG.drawText()

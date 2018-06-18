@@ -41,7 +41,8 @@ def biconnected(G):
                 v.add(w[0])
                 v.add(w[1])
                 #print(w,end="")
-        verts.append(v)
+        if len(v) > 0:
+            verts.append(v)
     
     #print("\n\nBiconnected Subgraphs:\n{}".format(verts))
     
@@ -49,9 +50,9 @@ def biconnected(G):
     #nodes = [i for i in range(len(d))]
     #for i in zip(nodes,pred,depth,lowpoint,cut):
     #    print(i)
+
     
-    
-    return depth,lowpoint,verts
+    return verts
 
 def explore(d,x,checked,working,pred,depth,lowpoint,cut,edges,verts):
 
@@ -134,11 +135,11 @@ def testBiconnectedComponents():
         #plt.text(p[0]+.05,p[1]+.3,str(j),color='red',size="x-large")
     
         
-    d,l,v = biconnected(G)
-    for i in range(15):
-        p = G.pos[i]
-        plt.text(p[0]+.05,p[1]+.3,str(d[i]),color='red',size="x-large")
-        plt.text(p[0]+.05,p[1]+.5,str(l[i]),color='green',size="x-large")
+    v = biconnected(G)
+    print(v)
+
+    for i in v:
+        convexCircle(G,list(i),.3,'red')
         
-#testBiconnectedComponents()
+testBiconnectedComponents()
     

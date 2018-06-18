@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.spatial
 import random
 import matplotlib.patches as patches
 
@@ -156,6 +157,11 @@ class Graph:
     def delEdgesBi(self,A,B):
         self.Mat[A,B] = 0
         self.Mat[B,A] = 0
+
+
+    def renumber(self):
+        self.texts = [i for i in range(self.size)]
+
 
     # Simple drawing functions for common situations
     def QuickDraw(self):
@@ -604,14 +610,40 @@ def checkCyclic(R):
                 emptyRow = False
         return True
 
-# Extract a subgraph
-def subgraph(R,L):
-    if issqmat(R):
-        t = R.copy()
-        t = t[L,:]
-        t = t[:,L]
-        return t
+# Extract an induced subgraph    
+def subgraph(G,L):
+    
+    outG = Graph(NodeSize = G.NodeSize,
+                 TextSize = G.TextSize,
+                 NodeColor = G.NodeColor,
+                 EdgeColor = G.EdgeColor,
+                 EdgeWidth = G.EdgeWidth)
 
+    outG.size = len(L)
+        
+    outG.colors = [G.colors[i] for i in L]
+    outG.pos = [G.pos[i] for i in L]
+    outG.radii = [G.radii[i] for i in L]
+    outG.texts = [G.texts[i] for i in L]
+    outG.tscales = [G.tscales[i] for i in L]
+    outG.zpos = [G.zpos[i] for i in L]
+    
+    M = G.Mat.copy()
+    M = M[L,:]
+    M = M[:,L]
+    outG.Mat = M
+    
+    D = G.Dist.copy()
+    D = D[L,:]
+    D = D[:,L]
+    outG.Dist = D
+    
+    C = G.Curves.copy()
+    C = C[L,:]
+    C = C[:,L]
+    outG.Curves = C
+    
+    return outG
 
 # Return the depth of each node using a depth first search
 # The search considers the "next" node to be the one with the lowest index
@@ -727,7 +759,18 @@ def indegree(R):
 ##
 ###############################################################################
 ###############################################################################
-    
+
+def convexCircle(G,L,r,color="black"):
+    pts = []
+    for i in L:
+        pts += arc(G.pos[i],r,[0,2*np.pi],20)
+    hull = scipy.spatial.ConvexHull(pts)
+    x = [pts[i][0] for i in hull.vertices]
+    y = [pts[i][1] for i in hull.vertices]
+    x.append(x[0])
+    y.append(y[0])
+    plt.plot(x,y,color=color)
+
 
 # Find the minimum and maximum of a list
 def minmax(L):

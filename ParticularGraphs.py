@@ -172,7 +172,43 @@ def GoldnerHararyGraph(**kwargs):
                [1,2,0,3,3,4,4,4,5,5,6,6,7,7,7,7,7,8,8,9,9,10,10,10,10,10])
     
     return G
+
+def wheelGraph(N,**kwargs):
+    G = Graph(**kwargs)
     
+    G.addNode()
+        
+    xy = arc((0,0),2.5,[0,np.pi*2],N)
+
+    for pos in xy:
+        G.addNode(pos)
+    G.addEdgesBi(0,[i+1 for i in range(N)])
+    G.addEdgesBi([i+1 for i in range(N)],[i+2 for i in range(N-1)]+[1])
+        
+    
+    return G
+
+def gridGraph(N,**kwargs):
+    G = Graph(**kwargs)
+    
+    x = np.linspace(-2,2,N)
+    y = np.linspace(-2,2,N)
+    
+    L = []
+    for i in range(N):
+        for j in range(N):
+            L.append([x[i],y[j]])
+            
+    G.addNodes(L)
+    
+    for i in range(N):
+        for j in range(N):
+            if j < N-1:
+                G.addEdges(i+N*j,i+N*(j+1))
+            if i < N-1:
+                G.addEdges(i+N*j,i+N*j+1)
+    
+    return G
 ###############################################################################
 ###############################################################################
 ##
@@ -183,17 +219,11 @@ def GoldnerHararyGraph(**kwargs):
 
 def testParticularGraphs():
 
-    G = GoldnerHararyGraph(NodeSize=.15,TextSize=1.5)
-    f,a = makeCanvas(size=[9,9])
+    G = pappusGraph()#4,NodeSize=.15,TextSize=1.5)
+    makeCanvas(size=[9,9])
     G.drawNodes()
     G.drawLines()
     G.drawText()
-    #plt.title("Original Graph")
-    print()
 
-    #makeCanvas()
-    #G.Mat = complement(G.Mat)
-    #G.QuickDraw()
-    #plt.title("Complementary Graph")
 
 #testParticularGraphs()
